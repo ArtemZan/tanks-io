@@ -1,11 +1,3 @@
-var a = 0;
-var v = 0;
-var d = 50;
-
-var t = 0;
-
-var backgroundColor;
-
 function Init(canvasElement) {
     canvas = canvasElement;
     canvas.width = window.innerWidth;
@@ -14,35 +6,6 @@ function Init(canvasElement) {
     context = canvas.getContext("2d");
 
 }
-
-
-document.addEventListener("keydown", e => {
-    keysDown[e.key] = true;
-})
-
-document.addEventListener("keyup", e => {
-    keysDown[e.key] = false;
-})
-
-document.addEventListener("wheel", e => {
-
-})
-
-document.addEventListener("mousedown", e => {
-
-})
-
-document.addEventListener("mouseup", e => {
-    scalingX = false;
-    scalingY = false;
-})
-
-document.addEventListener("mousemove", e => {
-
-})
-
-
-
 
 
 var canvas;
@@ -54,24 +17,27 @@ var DEFAULT_FONT_SIZE = 16;
 var DEFAULT_FONT_FAMILY = 'serif';
 /* --- */
 
-/* State */
-var scaleX = 1;
-var scaleY = 1;
-var scalingX = false;
-var scalingY = false;
-var keysDown = [];
-var keysPressed = [];
-
-/* --- */
-
 
 
 class matrix2x2 {
-    constructor(a, b, c, d) {
-        this.a = a;
-        this.b = b;
-        this.c = c;
-        this.d = d;
+    constructor(i, j) {
+        this.x = i;
+        this.y = j;
+    }
+}
+
+class matrix3x3 {
+    constructor(x, y, z) {
+        if (!(x instanceof vec3) || x instanceof Number) {
+            this.x = new vec3(x, 0, 0);
+            this.y = new vec3(0, x, 0);
+            this.z = new vec3(0, 0, x);
+        }
+        else {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
     }
 }
 
@@ -81,17 +47,14 @@ class vec2 {
         this.y = y;
     }
 
-    multiply(matrix) {
+    mult(matrix) {
         if (matrix instanceof matrix2x2) {
-            var res = new vec2;
-            res.x = matrix.x1 * this.x + matrix.y1 * this.y;
-            res.y = matrix.x2 * this.x + matrix.y2 * this.y;
-            return res;
+            return matrix.x.scale(this.x).add(matrix.y.scale(this.y));
         }
     }
 
     rotate(rad) {
-        return this.multiply(new matrix2x2(Math.cos(rad), -Math.sin(rad), Math.sin(rad), Math.cos(rad)));
+        return this.mult(new matrix2x2(Math.cos(rad), -Math.sin(rad), Math.sin(rad), Math.cos(rad)));
     }
 
     normalize() {
@@ -116,6 +79,65 @@ class vec2 {
     }
 }
 
+class vec3 {
+    constructor(x, y, z) {
+        if (y === undefined) {
+            this.x = x;
+            this.y = x;
+            this.z = x;
+        }
+        else {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+    }
+
+    mult(matrix) {
+        if (matrix instanceof matrix3x3) {
+            return matrix.x.scale(this.x).add(matrix.y.scale(this.y)).add(matrix.z.scale(this.z));
+        }
+    }
+
+    //to do
+    rotate(axis, rad) {
+
+        //return this.multiply(new matrix3x3(Math.cos(rad), -Math.sin(rad), Math.sin(rad), Math.cos(rad)));
+    }
+
+    normalize() {
+        let l = Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+        return this.scale(1 / l);
+    }
+
+    magnitude() {
+        return Math.sqrt(this.x ** 2 + this.y ** 2 + this.z ** 2);
+    }
+
+    sub(vec) {
+        return new vec3(this.x - vec.x, this.y - vec.y, this.z - vec.z);
+    }
+
+    add(vec) {
+        return new vec3(this.x + vec.x, this.y + vec.y, this.z + vec.z);
+    }
+
+    scale(k) {
+        return new vec3(this.x * k, this.y * k, this.z * k);
+    }
+}
+
+class Camera2D {
+    constructor(view) {
+        if (view instanceof matrix3x3) {
+            this.view = view;
+        }
+        else {
+            this.view = new matrix3x3(1);
+        }
+    }
+}
 
 /* General utilities */
 const ClearFloat = x => Math.round(x * 1e9) / 1e9
@@ -206,14 +228,12 @@ function DrawDot(pos, size, color) {
 }
 
 function DrawTriangle(vert1, vert2, vert3, color) {
-    
+
     SetColor(color);
-    
+
     vert1 = ToWindowSpace(vert1);
     vert2 = ToWindowSpace(vert2);
     vert3 = ToWindowSpace(vert3);
-
-    console.log(vert1, vert2, vert3);
 
     context.beginPath();
     context.lineWidth = 2;
@@ -230,8 +250,7 @@ function DrawTriangle(vert1, vert2, vert3, color) {
 
 /* Meshes and groups renderers */
 function DrawTriangles(vertices, color) {
-    if(color === undefined)
-    {
+    if (color === undefined) {
         color = "#000000";
     }
 
@@ -331,7 +350,8 @@ function RunLoop(OnUpdate, OnStop) {
 
 
 export {
-    vec2, matrix2x2,
+    vec2, vec3, matrix2x2, matrix3x3,
+    Camera2D,
     Init, RunLoop,
     Clear,
     SetColor,

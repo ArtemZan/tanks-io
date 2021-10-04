@@ -2,7 +2,7 @@
 //const io = require("socket.io-client").io("http://localhost:3000");
 import "./App.css"
 
-import Game from "./Game";
+import Game from "./Game/Game";
 
 
 
