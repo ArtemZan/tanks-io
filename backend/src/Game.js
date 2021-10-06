@@ -1,67 +1,40 @@
-const {vec2} = require("./Math")
+const io = require("./Connection");
+let { PlayersCount, GetPlayer } = require("./Player");
 
-let players = [];
+function GameLoop(timer) {
+    UpdatePosition(timer);
 
-class Player
-{
-    constructor()
-    {
-        this.pos = new vec2(0, 0);
-        this.dir = new vec2(0, 1);
-        this.speed = 0;
+    Render();
+
+    timer.setTime((new Date).getTime())
+    //io.emit("update", { vertices: [{ x: -0.5, y: -0.5 }, { x: 0.5, y: -0.5 }, { x: 0.0, y: 0.7 }] })
+}
+
+function Render() {
+    let vertices = [];
+    for (let player_id = 0; player_id < PlayersCount(); player_id++) {
+        GetPlayer(player_id).Render(vertices);
     }
 
-    Render(buffer)
-    {
-        let x = this.pos.x + this.dir.rotate(-Math.PI / 4).x * 0.01;
-        let y = this.pos.y + this.dir.rotate(-Math.PI / 4).y * 0.015
-        buffer.push(
-            {
-                x: -x, 
-                y: -y
-            },
-            {
-                x: -x, 
-                y: y
-            },
-            {
-                x: x, 
-                y: -y
-            },
-            {
-                x: -x, 
-                y: y
-            },
-            {
-                x: x, 
-                y: -y
-            },
-            {
-                x: x, 
-                y: y
-            }
-        );
+    //console.log(JSON.stringify(vertices))
+    io.emit("update", { vertices });
+}
+
+function UpdatePosition(timer)
+{
+    let date = new Date();
+    let dTime = date.getTime() - timer.getTime();
+    
+    for (let player_id = 0; player_id < PlayersCount(); player_id++) {
+        let player = GetPlayer(player_id);
+
+        player.pos = player.pos.add(player.dir.scale(player.speed * dTime));
+        //console.log(player.dir);
+        player.dir = player.dir.rotate(player.rotationSpeed * dTime);
+        //console.log(player.rotationSpeed * dTime);
+        //console.log(player.dir);
     }
+
 }
 
-function AddPlayer()
-{
-    players.push(new Player());
-}
-
-function RemovePlayer(id)
-{
-    players.splice(id, 1);
-}
-
-function GetPlayer(id)
-{
-    return players[id];
-}
-
-function PlayersCount()
-{
-    return players.length;
-}
-
-module.exports = {AddPlayer, RemovePlayer, PlayersCount, GetPlayer};
+module.exports = {GameLoop}

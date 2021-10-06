@@ -1,59 +1,80 @@
-let { PlayersCount, AddPlayer, RemovePlayer, GetPlayer } = require("./Game");
-let timer = 0;
+const { PlayersCount, AddPlayer, RemovePlayer, GetPlayer } = require("./Player");
+const {GameLoop} = require("./Game")
+const io = require("./Connection");
 
-const app = require("express")();
-const http = require("http").createServer(app);
-const io = require("socket.io")(http);
-
-function GameLoop() {
-    Render();
-    //io.emit("update", { vertices: [{ x: -0.5, y: -0.5 }, { x: 0.5, y: -0.5 }, { x: 0.0, y: 0.7 }] })
-}
-
-function Render() {
-    let vertices = [];
-    for (let player_id = 0; player_id < PlayersCount(); player_id++) {
-        GetPlayer(player_id).Render(vertices);
-    }
-
-    console.log(JSON.stringify(vertices))
-    io.emit("update", { vertices });
-}
 
 io.on("connection", client => {
-    console.log("New client");
+    console.log("New player");
 
-    client.id = PlayersCount();
+    let loopId = 0;
+    let timer;
+
+    //to do
+    const player_id = PlayersCount()
+
     AddPlayer();
 
     if (PlayersCount() === 2) {
         io.emit("start", { pos: { x: 0, y: 0 } });
 
-        timer = setInterval(GameLoop, 3000);
+        timer = new Date();
+        loopId = setInterval(GameLoop.bind(null, timer), 10);
     }
 
     client.on("disconnect", () => {
-        RemovePlayer(client.id);
+        RemovePlayer(player_id);
 
         console.log("Disconnected,", PlayersCount(), "players remain");
 
         if (PlayersCount() <= 1) {
             console.log("All players left, the game ends");
             io.emit("end");
-            clearInterval(timer);
+            clearInterval(loopId);
         }
     })
 
 
-    client.on("move", ahead => {
-        let player = GetPlayer(client.id);
+    client.on("startMoving", ahead => {
+        let player = GetPlayer(player_id);
 
-        player.pos += player.dir / 10;
+        if(!player)
+        {
+            return;
+        }
 
-        Render();
+        player.speed = (ahead ? 1 : -1) * 0.0002;
+    })
+
+    client.on("stopMoving", () => {
+        let player = GetPlayer(player_id);
+
+        if(!player)
+        {
+            return;
+        }
+
+        player.speed = 0;
+    })
+    
+    client.on("startRotating", clockwise => {
+        let player = GetPlayer(player_id);
+
+        if(!player)
+        {
+            return;
+        }
+
+        player.rotationSpeed = (clockwise ? -1 : 1) * 0.005;
+    })
+
+    client.on("stopRotating", () => {
+        let player = GetPlayer(player_id);
+
+        if(!player)
+        {
+            return;
+        }
+
+        player.rotationSpeed = 0;
     })
 })
-
-http.listen(3000, () => {
-    console.log("Listenning on port 3000");
-});
