@@ -1,5 +1,5 @@
 const io = require("./Connection");
-let { PlayersCount, GetPlayer } = require("./Player");
+let { players, PlayersCount, GetPlayer } = require("./Player");
 
 function GameLoop(timer) {
     UpdatePosition(timer);
@@ -12,8 +12,8 @@ function GameLoop(timer) {
 
 function Render() {
     let vertices = [];
-    for (let player_id = 0; player_id < PlayersCount(); player_id++) {
-        GetPlayer(player_id).Render(vertices);
+    for (let player_id in players) {
+        players[player_id].Render(vertices);
     }
 
     //console.log(JSON.stringify(vertices))
@@ -25,8 +25,8 @@ function UpdatePosition(timer)
     let date = new Date();
     let dTime = date.getTime() - timer.getTime();
     
-    for (let player_id = 0; player_id < PlayersCount(); player_id++) {
-        let player = GetPlayer(player_id);
+    for (let player_id in players) {
+        let player = players[player_id];
 
         player.pos = player.pos.add(player.dir.scale(player.speed * dTime));
         //console.log(player.dir);

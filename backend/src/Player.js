@@ -1,6 +1,6 @@
 const {vec2, matrix2x2} = require("./Math")
 
-let players = [];
+let players = {};
 
 class Player
 {
@@ -64,12 +64,21 @@ class Player
 
 function AddPlayer()
 {
-    players.push(new Player());
+    for(let i = 0; ; i++)
+    {
+        if(players[i] === undefined)
+        {
+            players[i] = new Player();
+            return i;
+        }
+    }
 }
 
 function RemovePlayer(id)
 {
-    players.splice(id, 1);
+    console.log(players);
+    delete players[id];
+    console.log(players);
 }
 
 function GetPlayer(id)
@@ -79,7 +88,7 @@ function GetPlayer(id)
 
 function PlayersCount()
 {
-    return players.length;
+    return Object.keys(players).length;
 }
 
-module.exports = {AddPlayer, RemovePlayer, PlayersCount, GetPlayer};
+module.exports = {players, AddPlayer, RemovePlayer, PlayersCount, GetPlayer};

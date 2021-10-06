@@ -73,6 +73,10 @@ export default class Game extends Component {
             this.setState({hasGameStarted: true});
         })
 
+        socket.on("join", () => {
+            this.setState({hasGameStarted: true});
+        })
+
         socket.on("end", () => {
             console.log("The game finished!");
             this.setState({hasGameStarted: false});
@@ -139,9 +143,8 @@ export default class Game extends Component {
 
                 {!this.state.hasGameStarted && <StartWindow />}
 
-                <canvas ref={this.canvas} id="canvas">
-
-                </canvas>
+                <canvas ref={this.canvas} 
+                style = {{visibility: this.state.hasGameStarted ? "visible" : "hidden"}}/>
             </div>
         )
     }

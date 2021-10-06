@@ -4,21 +4,22 @@ const io = require("./Connection");
 
 
 io.on("connection", client => {
-    console.log("New player");
+    console.log("New player,", PlayersCount() + 1, "now");
 
     let loopId = 0;
     let timer;
 
-    //to do
-    const player_id = PlayersCount()
-
-    AddPlayer();
+    const player_id = AddPlayer();
 
     if (PlayersCount() === 2) {
         io.emit("start", { pos: { x: 0, y: 0 } });
 
         timer = new Date();
         loopId = setInterval(GameLoop.bind(null, timer), 10);
+    }
+    else if(PlayersCount() >= 2)
+    {
+        client.emit("join");
     }
 
     client.on("disconnect", () => {
