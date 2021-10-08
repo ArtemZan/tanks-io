@@ -10,21 +10,27 @@ function GameLoop(timer) {
     //io.emit("update", { vertices: [{ x: -0.5, y: -0.5 }, { x: 0.5, y: -0.5 }, { x: 0.0, y: 0.7 }] })
 }
 
-function Render() {
+async function Render() {
+
+    const sockets = await io.fetchSockets();
+
     let vertices = [];
     for (let player_id in players) {
         players[player_id].Render(vertices);
     }
 
+    for(let socket of sockets)
+    {
+        socket.emit("update", { vertices, pos: players[socket.id].pos, dir: players[socket.id].dir });
+    }
     //console.log(JSON.stringify(vertices))
-    io.emit("update", { vertices });
+
 }
 
-function UpdatePosition(timer)
-{
+function UpdatePosition(timer) {
     let date = new Date();
     let dTime = date.getTime() - timer.getTime();
-    
+
     for (let player_id in players) {
         let player = players[player_id];
 
@@ -37,4 +43,4 @@ function UpdatePosition(timer)
 
 }
 
-module.exports = {GameLoop}
+module.exports = { GameLoop }

@@ -62,16 +62,9 @@ class Player
     }
 }
 
-function AddPlayer()
+function AddPlayer(id)
 {
-    for(let i = 0; ; i++)
-    {
-        if(players[i] === undefined)
-        {
-            players[i] = new Player();
-            return i;
-        }
-    }
+    players[id] = new Player();
 }
 
 function RemovePlayer(id)

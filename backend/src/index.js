@@ -9,7 +9,7 @@ io.on("connection", client => {
     let loopId = 0;
     let timer;
 
-    const player_id = AddPlayer();
+    AddPlayer(client.id);
 
     if (PlayersCount() === 2) {
         io.emit("start", { pos: { x: 0, y: 0 } });
@@ -23,7 +23,7 @@ io.on("connection", client => {
     }
 
     client.on("disconnect", () => {
-        RemovePlayer(player_id);
+        RemovePlayer(client.id);
 
         console.log("Disconnected,", PlayersCount(), "players remain");
 
@@ -36,7 +36,7 @@ io.on("connection", client => {
 
 
     client.on("startMoving", ahead => {
-        let player = GetPlayer(player_id);
+        let player = GetPlayer(client.id);
 
         if(!player)
         {
@@ -47,7 +47,7 @@ io.on("connection", client => {
     })
 
     client.on("stopMoving", () => {
-        let player = GetPlayer(player_id);
+        let player = GetPlayer(client.id);
 
         if(!player)
         {
@@ -58,18 +58,18 @@ io.on("connection", client => {
     })
     
     client.on("startRotating", clockwise => {
-        let player = GetPlayer(player_id);
+        let player = GetPlayer(client.id);
 
         if(!player)
         {
             return;
         }
 
-        player.rotationSpeed = (clockwise ? -1 : 1) * 0.005;
+        player.rotationSpeed = (clockwise ? -1 : 1) * 0.002;
     })
 
     client.on("stopRotating", () => {
-        let player = GetPlayer(player_id);
+        let player = GetPlayer(client.id);
 
         if(!player)
         {

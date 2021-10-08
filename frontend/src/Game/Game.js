@@ -18,8 +18,17 @@ export default class Game extends Component {
 
         this.canvas = createRef();
         this.camera = new Camera2D;
+        this.playerPos = new vec2();
+        this.playerDir = new vec2();
+        this.currentCameraOffset = new vec2(0, 0);
         this.vertices = [];
         this.keysPressed = [];
+    }
+
+    OnGameStarts()
+    {
+        console.log("The game begins!");
+        this.setState({hasGameStarted: true});
     }
 
 
@@ -69,12 +78,11 @@ export default class Game extends Component {
 
         socket.on("start", data => {
             //console.log("connected", data);
-            console.log("The game begins!");
-            this.setState({hasGameStarted: true});
+            this.OnGameStarts();
         })
 
         socket.on("join", () => {
-            this.setState({hasGameStarted: true});
+            this.OnGameStarts();
         })
 
         socket.on("end", () => {
@@ -83,7 +91,11 @@ export default class Game extends Component {
         })
 
         socket.on("update", gameState => {
+            //console.log(gameState.pos.y);
+
             this.vertices = gameState.vertices;
+            this.playerPos = new vec2(gameState.pos.x, gameState.pos.y);
+            this.playerDir = new vec2(gameState.dir.x, gameState.dir.y);
 
             for(let k in this.keysPressed)
             {
@@ -93,6 +105,7 @@ export default class Game extends Component {
                 }
             }
 
+            this.SetUpCamera();
             this.Draw();
         })
 
@@ -104,16 +117,43 @@ export default class Game extends Component {
     }
 
     componentWillUnmount() {
-        window.removeEventListener("resize", this.OnResize.bind(this));
-        window.romoveEventListener("keydown", this.OnKeyDown.bind(this));
+        //window.removeEventListener("resize", this.OnResize.bind(this));
+        //window.romoveEventListener("keydown", this.OnKeyDown.bind(this));
     }
 
 
+    SetUpCamera()
+    {
+        let aspect_ratio = window.innerWidth / window.innerHeight;
+        this.camera.view.x.x = 2 / aspect_ratio;
+        this.camera.view.y.y = 2;
+
+        let offset = this.playerDir.scale(0.1).sub(this.currentCameraOffset);
+
+        const cam_movement_speed = 0.0003;
+
+        if(offset.x > cam_movement_speed)
+            this.currentCameraOffset.x += cam_movement_speed;
+        else if(offset.x < -cam_movement_speed)
+            this.currentCameraOffset.x -= cam_movement_speed;
+        else
+            this.currentCameraOffset.x += offset.x;
+
+        if(offset.y > cam_movement_speed)
+            this.currentCameraOffset.y += cam_movement_speed;
+        else if(offset.y < -cam_movement_speed)
+            this.currentCameraOffset.y -= cam_movement_speed;
+        else
+            this.currentCameraOffset.y += offset.y;
+
+        this.camera.view.z = new vec3(
+            -this.playerPos.x * 2 / aspect_ratio - this.currentCameraOffset.x, 
+            -this.playerPos.y * 2 - this.currentCameraOffset.y, 
+            1);
+    }
 
     Draw() {
         if (this.vertices) {
-            this.camera.view.x.x = window.innerHeight / window.innerWidth;
-
             if (this.canvas.current) {
                 this.canvas.current.width = window.innerWidth;
                 this.canvas.current.height = window.innerHeight;
