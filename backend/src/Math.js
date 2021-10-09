@@ -119,4 +119,5 @@ class vec3 {
     }
 }
 
+
 module.exports = { vec2, matrix2x2 }

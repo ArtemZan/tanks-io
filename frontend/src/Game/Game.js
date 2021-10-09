@@ -1,5 +1,14 @@
 import { Component, createRef, useEffect, useState } from "react"
-import { Init as InitDrawingLib, DrawTriangles, Clear, Camera2D, vec2, vec3 } from "./Drawing";
+import { 
+    Init as InitDrawingLib, 
+    DrawTriangles, 
+    Clear, 
+    Camera2D, 
+    vec2, 
+    vec3, 
+    ToWindowSpace,
+    ToWorldSpace 
+} from "./Drawing";
 import "./Game.css"
 
 import io from "socket.io-client"
@@ -18,57 +27,65 @@ export default class Game extends Component {
 
         this.canvas = createRef();
         this.camera = new Camera2D;
-        this.playerPos = new vec2();
+        this.playerPos = new vec2(0, 0);
         this.playerDir = new vec2();
         this.currentCameraOffset = new vec2(0, 0);
+
+        this.objects = [];
         this.vertices = [];
         this.keysPressed = [];
     }
 
-    OnGameStarts()
-    {
+    OnGameStarts() {
         console.log("The game begins!");
-        this.setState({hasGameStarted: true});
+        this.setState({ hasGameStarted: true });
     }
 
 
     OnResize() {
     }
 
-    OnKeyDown(e)
+    OnMouseDown(e)
     {
+        if(!this.state.hasGameStarted)
+            return;
+
+        let dir = ToWorldSpace({x: e.x, y: e.y});
+        console.log(dir, this.playerPos);
+        //dir = dir.sub(this.playerPos);
+        dir.x *= window.innerWidth / window.innerHeight;
+        socket.emit("shoot", dir);
+    }
+
+    OnKeyDown(e) {
         this.keysPressed[e.key] = true;
 
-        if(IsKeyDown("w"))
-        {
+        if(!this.state.hasGameStarted)
+            return;
+            
+        if (IsKeyDown("w")) {
             socket.emit("startMoving", true);
         }
 
-        if(IsKeyDown("s"))
-        {
+        if (IsKeyDown("s")) {
             socket.emit("startMoving", false);
         }
-        
-        if(IsKeyDown("a"))
-        {
+
+        if (IsKeyDown("a")) {
             socket.emit("startRotating", false);
         }
 
-        if(IsKeyDown("d"))
-        {
+        if (IsKeyDown("d")) {
             socket.emit("startRotating", true);
         }
     }
 
-    OnKeyUp(e)
-    {
-        if(IsKeyUp("w") && IsKeyUp("s"))
-        {
+    OnKeyUp(e) {
+        if (IsKeyUp("w") && IsKeyUp("s")) {
             socket.emit("stopMoving");
         }
-                
-        if(IsKeyUp("a") && IsKeyUp("d"))
-        {
+
+        if (IsKeyUp("a") && IsKeyUp("d")) {
             socket.emit("stopRotating");
         }
     }
@@ -87,20 +104,50 @@ export default class Game extends Component {
 
         socket.on("end", () => {
             console.log("The game finished!");
-            this.setState({hasGameStarted: false});
+            this.setState({ hasGameStarted: false });
         })
 
         socket.on("update", gameState => {
-            //console.log(gameState.pos.y);
+            console.log(gameState.objects);
+            if (gameState && gameState.objects) {
 
-            this.vertices = gameState.vertices;
-            this.playerPos = new vec2(gameState.pos.x, gameState.pos.y);
-            this.playerDir = new vec2(gameState.dir.x, gameState.dir.y);
-
-            for(let k in this.keysPressed)
-            {
-                if(IsKeyUp(k))
+                for (let obj of gameState.objects)
                 {
+                    if(obj.i == this.objects.length)
+                    {
+                        this.objects.push(obj);
+                    }
+                    else if(obj.i > this.objects.length)
+                    {
+                        console.log("Couldn't add object at index ", obj.i);
+                    }
+                    else
+                    {
+                        if(obj.v.length)
+                        {
+                            this.objects[obj.i].v = obj.v;
+                        }
+                        else
+                        {
+                            delete this.objects[obj.i];
+                        }
+                    }
+                }
+
+                this.objects = this.objects.filter(el => el);
+
+                this.vertices = [];
+                for(let o of this.objects)
+                {
+                    this.vertices.push(...o.v);
+                }
+
+                this.playerPos = new vec2(gameState.pos.x, gameState.pos.y);
+                this.playerDir = new vec2(gameState.dir.x, gameState.dir.y);
+            }
+
+            for (let k in this.keysPressed) {
+                if (IsKeyUp(k)) {
                     this.keysPressed[k] = false;
                 }
             }
@@ -114,6 +161,7 @@ export default class Game extends Component {
         window.addEventListener("resize", this.OnResize.bind(this));
         window.addEventListener("keydown", this.OnKeyDown.bind(this));
         window.addEventListener("keyup", this.OnKeyUp.bind(this));
+        window.addEventListener("mousedown", this.OnMouseDown.bind(this));
     }
 
     componentWillUnmount() {
@@ -122,8 +170,7 @@ export default class Game extends Component {
     }
 
 
-    SetUpCamera()
-    {
+    SetUpCamera() {
         let aspect_ratio = window.innerWidth / window.innerHeight;
         this.camera.view.x.x = 2 / aspect_ratio;
         this.camera.view.y.y = 2;
@@ -132,23 +179,23 @@ export default class Game extends Component {
 
         const cam_movement_speed = 0.0003;
 
-        if(offset.x > cam_movement_speed)
+        if (offset.x > cam_movement_speed)
             this.currentCameraOffset.x += cam_movement_speed;
-        else if(offset.x < -cam_movement_speed)
+        else if (offset.x < -cam_movement_speed)
             this.currentCameraOffset.x -= cam_movement_speed;
         else
             this.currentCameraOffset.x += offset.x;
 
-        if(offset.y > cam_movement_speed)
+        if (offset.y > cam_movement_speed)
             this.currentCameraOffset.y += cam_movement_speed;
-        else if(offset.y < -cam_movement_speed)
+        else if (offset.y < -cam_movement_speed)
             this.currentCameraOffset.y -= cam_movement_speed;
         else
             this.currentCameraOffset.y += offset.y;
 
         this.camera.view.z = new vec3(
-            -this.playerPos.x * 2 / aspect_ratio - this.currentCameraOffset.x, 
-            -this.playerPos.y * 2 - this.currentCameraOffset.y, 
+            -this.playerPos.x * 2 / aspect_ratio - this.currentCameraOffset.x,
+            -this.playerPos.y * 2 - this.currentCameraOffset.y,
             1);
     }
 
@@ -183,8 +230,8 @@ export default class Game extends Component {
 
                 {!this.state.hasGameStarted && <StartWindow />}
 
-                <canvas ref={this.canvas} 
-                style = {{visibility: this.state.hasGameStarted ? "visible" : "hidden"}}/>
+                <canvas ref={this.canvas}
+                    style={{ visibility: this.state.hasGameStarted ? "visible" : "hidden" }} />
             </div>
         )
     }

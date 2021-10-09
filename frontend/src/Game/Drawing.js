@@ -140,8 +140,6 @@ class Camera2D {
 }
 
 /* General utilities */
-const ClearFloat = x => Math.round(x * 1e9) / 1e9
-
 const MinWindowDimension = () => (window.innerWidth < window.innerHeight) ? window.innerWidth : window.innerHeight;
 const MaxWindowDimension = () => (window.innerWidth > window.innerHeight) ? window.innerWidth : window.innerHeight;
 
@@ -356,5 +354,6 @@ export {
     Clear,
     SetColor,
     DrawLine, DrawTriangle, DrawDot, DrawText,
-    DrawLines, DrawCurve, DrawBezierCurve, DrawTriangles, DrawTexts
+    DrawLines, DrawCurve, DrawBezierCurve, DrawTriangles, DrawTexts,
+    ToWindowSpace, ToWorldSpace
 }

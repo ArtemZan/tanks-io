@@ -1,5 +1,5 @@
 const { PlayersCount, AddPlayer, RemovePlayer, GetPlayer } = require("./Player");
-const {GameLoop} = require("./Game")
+const {GameLoop, StartGame, StopGame, Shoot} = require("./Game")
 const io = require("./Connection");
 
 
@@ -7,15 +7,12 @@ io.on("connection", client => {
     console.log("New player,", PlayersCount() + 1, "now");
 
     let loopId = 0;
-    let timer;
 
     AddPlayer(client.id);
 
     if (PlayersCount() === 2) {
         io.emit("start", { pos: { x: 0, y: 0 } });
-
-        timer = new Date();
-        loopId = setInterval(GameLoop.bind(null, timer), 10);
+        StartGame();    
     }
     else if(PlayersCount() >= 2)
     {
@@ -30,7 +27,8 @@ io.on("connection", client => {
         if (PlayersCount() <= 1) {
             console.log("All players left, the game ends");
             io.emit("end");
-            clearInterval(loopId);
+
+            StopGame();
         }
     })
 
@@ -77,5 +75,10 @@ io.on("connection", client => {
         }
 
         player.rotationSpeed = 0;
+    })
+
+
+    client.on("shoot", dir => {
+        Shoot(client.id, dir);
     })
 })
