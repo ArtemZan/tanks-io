@@ -83,48 +83,31 @@ class Object {
         this.speed = 0;
         this.rotationSpeed = 0;
     }
-
-    Render() {
-
-    }
 }
 
 
-class Player {
+class Player extends Object {
     constructor() {
-        this.pos = new vec2(0, 0);
-        this.dir = new vec2(0, 1);
-        this.speed = 0;
-        this.rotationSpeed = 0;
+        super();
+
+        this.aim = new vec2(0, 1);
+        this.turretDir = new vec2(0, 1);
+        this.turretRotationSpeed = 0;
     }
 
     Render() {
-        const x = 0.015;
-        const y = 0.01;
+        let hull = Rect(0.015, 0.01);
+        let turret = Rect(0.02, 0.003);
+        Move(turret, new vec2(0.01, 0));
 
-        let vertices = Rect(x, y);
+        RotateFromVector(hull, this.dir);
+        RotateFromVector(turret, this.turretDir);
 
-        RotateFromVector(vertices, this.dir);
 
+        let vertices = [...hull, ...turret];
         Move(vertices, this.pos);
 
         return vertices;
-
-        // for (let i = 0; i < 6; i++) {
-        //     let cos = this.dir.x;
-        //     let sin = this.dir.y;
-
-        //     let v = buffer[buffer.length - 6 + i];
-        //     console.log(v);
-        //     v = new vec2(v.x, v.y);
-        //     v = v.mult(new matrix2x2(
-        //         new vec2(cos, sin),
-        //         new vec2(-sin, cos)
-        //     ))
-
-        //     buffer[buffer.length - 6 + i].x = this.pos.x + v.x;
-        //     buffer[buffer.length - 6 + i].y = this.pos.y + v.y;
-        // }
     }
 }
 

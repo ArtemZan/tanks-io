@@ -13,7 +13,7 @@ import "./Game.css"
 
 import io from "socket.io-client"
 import StartWindow from "./StartWindow";
-import { IsKeyDown, IsKeyUp } from "./Input";
+import { IsKeyDown, IsKeyUp, mousePos } from "./Input";
 const socket = io("http://localhost:3000", { transports: ['websocket'] });
 
 
@@ -43,6 +43,14 @@ export default class Game extends Component {
 
 
     OnResize() {
+    }
+
+    OnMouseMove(e)
+    {
+        if(!this.state.hasGameStarted)
+            return;
+
+        this.RotateTurret();
     }
 
     OnMouseDown(e)
@@ -158,11 +166,20 @@ export default class Game extends Component {
         window.addEventListener("keydown", this.OnKeyDown.bind(this));
         window.addEventListener("keyup", this.OnKeyUp.bind(this));
         window.addEventListener("mousedown", this.OnMouseDown.bind(this));
+        window.addEventListener("mousemove", this.OnMouseMove.bind(this));
     }
 
     componentWillUnmount() {
         //window.removeEventListener("resize", this.OnResize.bind(this));
         //window.romoveEventListener("keydown", this.OnKeyDown.bind(this));
+    }
+
+    RotateTurret()
+    {
+        let dir = ToWorldSpace(mousePos);
+        dir = dir.add(this.currentCameraOffset);
+        dir.x *= window.innerWidth / window.innerHeight;
+        socket.emit("startRotatingTurret", dir);
     }
 
 

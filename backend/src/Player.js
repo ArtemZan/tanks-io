@@ -55,8 +55,24 @@ function StopRotatingPlayer(id)
     player.rotationSpeed = 0;
 }
 
-function Shoot(player_id, dir) {
-    dir = new vec2(dir.x, dir.y);
+
+function StartRotatingTurret(id, dir)
+{
+    let player = GetPlayer(id);
+
+    player.aim = new vec2(dir.x, dir.y).normalize();
+}
+
+function StopRotatingTurret(id)
+{
+    let player = GetPlayer(id);
+
+    player.turretRotationSpeed = 0;
+}
+
+
+function Shoot(player_id) {
+    let dir = players[player_id].turretDir;
     dir = dir.normalize();
     console.log(dir);
 
@@ -73,5 +89,8 @@ function Shoot(player_id, dir) {
 
 module.exports = {
     players, AddPlayer, RemovePlayer, PlayersCount, GetPlayer,
-    StartMovingPlayer, StopMovingPlayer, StartRotatingPlayer, StopRotatingPlayer, Shoot
+
+    StartMovingPlayer, StopMovingPlayer, 
+    StartRotatingPlayer, StopRotatingPlayer, StartRotatingTurret, StopRotatingTurret,
+    Shoot
 };

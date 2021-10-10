@@ -68,6 +68,16 @@ class vec2 {
     scale(k) {
         return new vec2(this.x * k, this.y * k);
     }
+
+    cross(vec)
+    {
+        return new vec3(this.x, this.y, 0).cross(new vec3(vec.x, vec.y, 0));
+    }
+
+    // sin(vec)
+    // {
+    //     return new vec3(this.x, this.y, 0).sin(new vec3(vec.x, vec.y, 0));
+    // }
 }
 
 class vec3 {
@@ -117,6 +127,30 @@ class vec3 {
     scale(k) {
         return new vec3(this.x * k, this.y * k, this.z * k);
     }
+
+    dot(vec)
+    {
+        return this.x * vec.x + this.y * vec.y + this.z * vec.z;
+    }
+
+    cos(vec)
+    {
+        return this.normalize.dot(vec.normalize());
+    }
+
+    cross(vec)
+    {
+        return new vec3(
+            this.y * vec.z - this.z * vec.y,
+            this.z * vec.x - this.x * vec.z,
+            this.x * vec.y - this.y * vec.x
+        )
+    }
+
+    // sin(vec)
+    // {
+    //     return this.normalize().cross(vec.normalize());
+    // }
 }
 
 

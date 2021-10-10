@@ -1,6 +1,10 @@
-const { PlayersCount, AddPlayer, RemovePlayer, GetPlayer, StartRotatingPlayer, StopRotatingPlayer } = require("./Player");
+const { 
+    PlayersCount, AddPlayer, RemovePlayer, 
+    StartRotatingPlayer, StopRotatingPlayer, StartRotatingTurret, StopRotatingTurret,
+    Shoot, StartMovingPlayer, StopMovingPlayer
+} = require("./Player");
+
 const {StartGame, StopGame} = require("./Game");
-const {Shoot, StartMovingPlayer, StopMovingPlayer} = require("./Player");
 const io = require("./Connection");
 
 
@@ -48,8 +52,16 @@ io.on("connection", client => {
         StopRotatingPlayer(client.id);
     })
 
+    client.on("startRotatingTurret", dir => {
+        StartRotatingTurret(client.id, dir);
+    })
+    
+    client.on("stopRotatingTurret", () => {
+        StopRotatingTurret(client.id);
+    })
 
-    client.on("shoot", dir => {
-        Shoot(client.id, dir);
+
+    client.on("shoot", () => {
+        Shoot(client.id);
     })
 })

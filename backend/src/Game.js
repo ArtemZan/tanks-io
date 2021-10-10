@@ -71,9 +71,26 @@ function UpdatePosition(timer) {
     for (let player_id in players) {
         let player = players[player_id];
 
-        if (Math.abs(player.speed) >= 1e-6 || Math.abs(player.rotationSpeed) >= 1e-6) {
+        if (Math.abs(player.speed) >= 1e-6 || Math.abs(player.rotationSpeed) >= 1e-6 || player.aim.sub(player.turretDir).magnitude() > 1e-2) {
             player.pos = player.pos.add(player.dir.scale(player.speed * dTime));
             player.dir = player.dir.rotate(player.rotationSpeed * dTime);
+
+            let rot_speed = 0;
+            if(player.aim.sub(player.turretDir).magnitude() > 1e-2)
+            {
+                if(player.aim.cross(player.turretDir).z > 0)
+                {
+                    rot_speed = -0.003;
+                }
+                else
+                {
+                    rot_speed = 0.003;
+                }
+            }
+
+            player.turretDir = player.turretDir.rotate((rot_speed + player.rotationSpeed) * dTime);
+
+
 
             let vertices = player.Render();
             objectsToBeUpdated.push({ i: index, v: vertices });
