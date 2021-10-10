@@ -52,7 +52,7 @@ export default class Game extends Component {
 
         let dir = ToWorldSpace({x: e.x, y: e.y});
         console.log(dir, this.playerPos);
-        //dir = dir.sub(this.playerPos);
+        dir = dir.add(this.currentCameraOffset);
         dir.x *= window.innerWidth / window.innerHeight;
         socket.emit("shoot", dir);
     }

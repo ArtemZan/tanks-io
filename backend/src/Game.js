@@ -22,9 +22,8 @@ function StartGame() {
     let i = 0;
 
     for (let player_id in players) {
-        let vertices = [];
-        players[player_id].Render(vertices);
-        objectsToBeUpdated.push({ i, v: vertices });
+        let v = players[player_id].Render();
+        objectsToBeUpdated.push({ i, v });
 
         i++;
     }
@@ -69,6 +68,11 @@ function GameLoop(timer) {
 
 async function EmitUpdate() {
 
+    if(objectsToBeUpdated.length === 0)
+    {
+        return;
+    }
+
     const sockets = await io.fetchSockets();
 
     //console.log(objectsToBeUpdated.length);
@@ -92,7 +96,7 @@ function UpdatePosition(timer) {
     for (let player_id in players) {
         let player = players[player_id];
 
-        if (Math.abs(player.speed) >= 1 - 6 || Math.abs(player.rotationSpeed) >= 1 - 6) {
+        if (Math.abs(player.speed) >= 1e-6 || Math.abs(player.rotationSpeed) >= 1e-6) {
             player.pos = player.pos.add(player.dir.scale(player.speed * dTime));
             player.dir = player.dir.rotate(player.rotationSpeed * dTime);
 
