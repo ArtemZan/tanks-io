@@ -1,12 +1,8 @@
 const io = require("./Connection");
 const { vec2 } = require("./Math");
 const { Bullet } = require("./Object");
-let { players, PlayersCount, GetPlayer } = require("./Player");
-
-let scene = {
-    obstacles: [],
-    bullets: []
-};
+const { players, PlayersCount, GetPlayer } = require("./Player");
+const {scene} = require("./Scene");
 
 
 let objectsToBeUpdated = [];
@@ -35,24 +31,6 @@ function StopGame() {
     clearInterval(intervalId);
 }
 
-function MovePlayer(id) {
-
-}
-
-function Shoot(player_id, dir) {
-    dir = new vec2(dir.x, dir.y);
-    dir = dir.normalize();
-    console.log(dir);
-
-    let bullet = new Bullet();
-
-    bullet.dir = dir;
-    bullet.pos = players[player_id].pos;
-    bullet.speed = 0.001;
-
-    scene.bullets.push(bullet);
-
-}
 
 
 function GameLoop(timer) {
@@ -68,14 +46,11 @@ function GameLoop(timer) {
 
 async function EmitUpdate() {
 
-    if(objectsToBeUpdated.length === 0)
-    {
+    if (objectsToBeUpdated.length === 0) {
         return;
     }
 
     const sockets = await io.fetchSockets();
-
-    //console.log(objectsToBeUpdated.length);
 
     for (let socket of sockets) {
         socket.emit("update", {
@@ -117,7 +92,6 @@ function UpdatePosition(timer) {
             bullet.Render(vertices);
         }
         else {
-            //console.log("Deleted");
             delete scene.bullets[bullet_i];
         }
 
@@ -129,8 +103,8 @@ function UpdatePosition(timer) {
     scene.bullets = scene.bullets.filter(el => el);
 
 
-    //    console.log(objectsToBeUpdated);
+    //console.log(objectsToBeUpdated);
 
 }
 
-module.exports = { StartGame, StopGame, Shoot }
+module.exports = {StartGame, StopGame}

@@ -1,17 +1,16 @@
-const { PlayersCount, AddPlayer, RemovePlayer, GetPlayer } = require("./Player");
-const {GameLoop, StartGame, StopGame, Shoot} = require("./Game")
+const { PlayersCount, AddPlayer, RemovePlayer, GetPlayer, StartRotatingPlayer, StopRotatingPlayer } = require("./Player");
+const {StartGame, StopGame} = require("./Game");
+const {Shoot, StartMovingPlayer, StopMovingPlayer} = require("./Player");
 const io = require("./Connection");
 
 
 io.on("connection", client => {
     console.log("New player,", PlayersCount() + 1, "now");
 
-    let loopId = 0;
-
     AddPlayer(client.id);
 
     if (PlayersCount() === 2) {
-        io.emit("start", { pos: { x: 0, y: 0 } });
+        io.emit("start");
         StartGame();    
     }
     else if(PlayersCount() >= 2)
@@ -22,10 +21,10 @@ io.on("connection", client => {
     client.on("disconnect", () => {
         RemovePlayer(client.id);
 
-        console.log("Disconnected,", PlayersCount(), "players remain");
+        console.log("A player disconnected,", PlayersCount(), "players remain");
 
         if (PlayersCount() <= 1) {
-            console.log("All players left, the game ends");
+            console.log("Not enough players, the game ends");
             io.emit("end");
 
             StopGame();
@@ -34,47 +33,19 @@ io.on("connection", client => {
 
 
     client.on("startMoving", ahead => {
-        let player = GetPlayer(client.id);
-
-        if(!player)
-        {
-            return;
-        }
-
-        player.speed = (ahead ? 1 : -1) * 0.0002;
+        StartMovingPlayer(client.id, ahead);
     })
 
     client.on("stopMoving", () => {
-        let player = GetPlayer(client.id);
-
-        if(!player)
-        {
-            return;
-        }
-
-        player.speed = 0;
+        StopMovingPlayer(client.id);
     })
     
     client.on("startRotating", clockwise => {
-        let player = GetPlayer(client.id);
-
-        if(!player)
-        {
-            return;
-        }
-
-        player.rotationSpeed = (clockwise ? -1 : 1) * 0.002;
+        StartRotatingPlayer(client.id, clockwise);
     })
 
     client.on("stopRotating", () => {
-        let player = GetPlayer(client.id);
-
-        if(!player)
-        {
-            return;
-        }
-
-        player.rotationSpeed = 0;
+        StopRotatingPlayer(client.id);
     })
 
 

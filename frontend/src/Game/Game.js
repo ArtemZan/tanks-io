@@ -93,14 +93,10 @@ export default class Game extends Component {
     componentDidMount() {
         InitDrawingLib(this.canvas.current);
 
-        socket.on("start", data => {
-            //console.log("connected", data);
-            this.OnGameStarts();
-        })
+        socket.on("start", this.OnGameStarts.bind(this));
 
-        socket.on("join", () => {
-            this.OnGameStarts();
-        })
+        socket.on("join", this.OnGameStarts.bind(this));
+
 
         socket.on("end", () => {
             console.log("The game finished!");
