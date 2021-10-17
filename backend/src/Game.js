@@ -45,7 +45,13 @@ function Explosion(bullet, hit_player_id)
 
         if(dist < 0.2)
         {
-            player.hp -= (0.2 - (dist < 0.1 ? 0.1 : dist)) * 15;
+
+            //Player near the explosion is also damaged
+            player.hp -= (0.2 - (dist < 0.1 ? 0.1 : dist)) * 5;
+            if(player_id === hit_player_id)
+            {
+                player.hp -= 2;
+            }
 
             if(player.hp <= 0)
             {

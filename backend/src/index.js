@@ -15,7 +15,7 @@ io.on("connection", client => {
 
     if (PlayersCount() === 2) {
         io.emit("start");
-        StartGame();    
+        StartGame();
     }
     else if(PlayersCount() >= 2)
     {
