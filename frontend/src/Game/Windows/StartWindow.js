@@ -1,4 +1,4 @@
-export default function StartWindow()
+export default function WaitingWindow()
 {
     return(
         <div className = "start-window">

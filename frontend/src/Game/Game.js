@@ -1,19 +1,23 @@
-import { Component, createRef, useEffect, useState } from "react"
-import { 
-    Init as InitDrawingLib, 
-    DrawTriangles, 
-    Clear, 
-    Camera2D, 
-    vec2, 
-    vec3, 
-    ToWindowSpace,
-    ToWorldSpace 
-} from "./Drawing";
 import "./Game.css"
+import "./Windows/Windows.css"
+
+import { Component, createRef, useEffect, useState } from "react"
+import {
+    Init as InitDrawingLib,
+    DrawTriangles,
+    Clear,
+    Camera2D,
+    vec2,
+    vec3,
+    ToWindowSpace,
+    ToWorldSpace
+} from "./Drawing";
+
 
 import io from "socket.io-client"
-import StartWindow from "./StartWindow";
+import StartWindow from "./Windows/StartWindow";
 import { IsKeyDown, IsKeyUp, mousePos } from "./Input";
+import UI, { UIStates } from "./Windows/UI";
 const socket = io("http://localhost:3000", { transports: ['websocket'] });
 
 
@@ -22,11 +26,16 @@ export default class Game extends Component {
         super(props);
 
         this.state = {
-            hasGameStarted: false
+            hasGameStarted: false,
+            UI: { state: UIStates.waitingForPlayers }
         };
 
         this.canvas = createRef();
         this.camera = new Camera2D;
+
+        this.gameLoopId = -1;
+
+        this.playerId = -1;
         this.playerPos = new vec2(0, 0);
         this.playerDir = new vec2();
         this.currentCameraOffset = new vec2(0, 0);
@@ -39,26 +48,96 @@ export default class Game extends Component {
     OnGameStarts() {
         console.log("The game begins!");
         this.setState({ hasGameStarted: true });
+
+        this.gameLoopId = setInterval(this.OnLocalUpdate.bind(this), 30);
+    }
+
+    OnGameStops() {
+        this.setState({ hasGameStarted: false });
+
+        //console.log("You lose or all players left");
+
+        clearInterval(this.gameLoopId);
+    }
+
+
+    OnUpdate(update) {
+        //console.log(update.obj);
+
+        if (!(update && update.obj)) {
+            console.log("Invalid data received from update");
+            return;
+        }
+
+        this.playerId = update.id;
+
+        //Update local scene
+        for (let obj of update.obj) {
+            if (obj.i == this.objects.length) {
+                this.objects.push(obj);
+            }
+            else if (obj.i > this.objects.length) {
+                console.log("Couldn't add object at index ", obj.i);
+            }
+            else {
+                if(obj.v)
+                {
+                    if (obj.v.length) {
+                        this.objects[obj.i].v = obj.v;
+                    }
+                    else {
+                        delete this.objects[obj.i];
+                    }
+                }
+            }
+        }
+
+        //Remove deleted(undefined) objects
+        this.objects = this.objects.filter(el => el);
+
+        //Update vertices
+        this.vertices = [];
+        for (let o of this.objects) {
+            this.vertices.push(...o.v);
+        }
+
+        //Update position and direction
+        let player = update.obj[update.id];
+        let pos = player.pos;
+        let dir = player.dir;
+
+        this.playerPos = new vec2(pos.x, pos.y);
+        this.playerDir = new vec2(dir.x, dir.y);
+    }
+
+    //This function is called independently of updates from server 
+    OnLocalUpdate() {
+        for (let k in this.keysPressed) {
+            if (IsKeyUp(k)) {
+                this.keysPressed[k] = false;
+            }
+        }
+
+        this.SetUpCamera();
+        this.Draw();
     }
 
 
     OnResize() {
     }
 
-    OnMouseMove(e)
-    {
-        if(!this.state.hasGameStarted)
+    OnMouseMove(e) {
+        if (!this.state.hasGameStarted)
             return;
 
         this.RotateTurret();
     }
 
-    OnMouseDown(e)
-    {
-        if(!this.state.hasGameStarted)
+    OnMouseDown(e) {
+        if (!this.state.hasGameStarted)
             return;
 
-        let dir = ToWorldSpace({x: e.x, y: e.y});
+        let dir = ToWorldSpace({ x: e.x, y: e.y });
         console.log(dir, this.playerPos);
         dir = dir.add(this.currentCameraOffset);
         dir.x *= window.innerWidth / window.innerHeight;
@@ -68,9 +147,9 @@ export default class Game extends Component {
     OnKeyDown(e) {
         this.keysPressed[e.key] = true;
 
-        if(!this.state.hasGameStarted)
+        if (!this.state.hasGameStarted)
             return;
-            
+
         if (IsKeyDown("w")) {
             socket.emit("startMoving", true);
         }
@@ -108,56 +187,17 @@ export default class Game extends Component {
 
         socket.on("end", () => {
             console.log("The game finished!");
-            this.setState({ hasGameStarted: false });
+            this.OnGameStops();
         })
 
-        socket.on("update", gameState => {
-            console.log(gameState.objects);
-            if (gameState && gameState.objects) {
+        socket.on("update", this.OnUpdate.bind(this))
 
-                for (let obj of gameState.objects)
-                {
-                    if(obj.i == this.objects.length)
-                    {
-                        this.objects.push(obj);
-                    }
-                    else if(obj.i > this.objects.length)
-                    {
-                        console.log("Couldn't add object at index ", obj.i);
-                    }
-                    else
-                    {
-                        if(obj.v.length)
-                        {
-                            this.objects[obj.i].v = obj.v;
-                        }
-                        else
-                        {
-                            delete this.objects[obj.i];
-                        }
-                    }
-                }
+        socket.on("lose", info => {
+            this.setState({ UI: { state: UIStates.lost, info } });
 
-                this.objects = this.objects.filter(el => el);
+            console.log("You lose");
 
-                this.vertices = [];
-                for(let o of this.objects)
-                {
-                    this.vertices.push(...o.v);
-                }
-
-                this.playerPos = new vec2(gameState.pos.x, gameState.pos.y);
-                this.playerDir = new vec2(gameState.dir.x, gameState.dir.y);
-            }
-
-            for (let k in this.keysPressed) {
-                if (IsKeyUp(k)) {
-                    this.keysPressed[k] = false;
-                }
-            }
-
-            this.SetUpCamera();
-            this.Draw();
+            this.OnGameStops();
         })
 
 
@@ -174,8 +214,7 @@ export default class Game extends Component {
         //window.romoveEventListener("keydown", this.OnKeyDown.bind(this));
     }
 
-    RotateTurret()
-    {
+    RotateTurret() {
         let dir = ToWorldSpace(mousePos);
         dir = dir.add(this.currentCameraOffset);
         dir.x *= window.innerWidth / window.innerHeight;
@@ -235,13 +274,12 @@ export default class Game extends Component {
         }
     }
 
-
+    
     render() {
-
         return (
             <div className="game">
 
-                {!this.state.hasGameStarted && <StartWindow />}
+                {!this.state.hasGameStarted && <UI {...this.state.UI}/>}
 
                 <canvas ref={this.canvas}
                     style={{ visibility: this.state.hasGameStarted ? "visible" : "hidden" }} />

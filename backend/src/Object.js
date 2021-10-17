@@ -1,6 +1,6 @@
 const { vec2, matrix2x2 } = require("./Math");
 
-function Rect(x, y) {
+function Rect(x, y, color) {
     let vert = [];
 
     vert.push(
@@ -85,10 +85,11 @@ class Object {
     }
 }
 
-
 class Player extends Object {
     constructor() {
         super();
+
+        this.hp = 10;
 
         this.aim = new vec2(0, 1);
         this.turretDir = new vec2(0, 1);
@@ -112,7 +113,15 @@ class Player extends Object {
 }
 
 class Bullet extends Object {
-    Render(buffer) {
+    constructor(player_id)
+    {
+        super();
+        
+        this.playerId = player_id;
+    }
+
+
+    Render() {
         const x = 0.01;
         const y = 0.005;
 
@@ -122,7 +131,7 @@ class Bullet extends Object {
 
         Move(vertices, this.pos);
 
-        buffer.push(...vertices);
+        //buffer.push(...vertices);
         return vertices;
     }
 }

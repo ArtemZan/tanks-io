@@ -76,7 +76,7 @@ function Shoot(player_id) {
     dir = dir.normalize();
     console.log(dir);
 
-    let bullet = new Bullet();
+    let bullet = new Bullet(player_id);
 
     bullet.dir = dir;
     bullet.pos = players[player_id].pos;
