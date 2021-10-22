@@ -2,10 +2,9 @@ const io = require("./Connection");
 const { vec2, DetectCollision } = require("./Math");
 const { Bullet } = require("./Object");
 const { players, PlayersCount, GetPlayer } = require("./Player");
-const { scene } = require("./Scene");
+const { scene, objectsToBeUpdated, UpdateObject } = require("./Scene");
 
 
-let objectsToBeUpdated = [];
 
 
 let intervalId;
@@ -19,12 +18,13 @@ function StartGame() {
 
     for (let player_id in players) {
         let v = players[player_id].Render();
-        objectsToBeUpdated.push({ i, v });
+        UpdateObject(i, v);
+        //objectsToBeUpdated.push({ i, v });
 
         i++;
     }
 
-    EmitUpdate();
+    DispatchUpdates();
 }
 
 function StopGame() {
@@ -56,11 +56,8 @@ function Explosion(bullet, hit_player_id)
             if(player.hp <= 0)
             {
                 KillPlayer(player_id);
-                objectsToBeUpdated.push({i: index, v: []});
-            }
-            else
-            {
-                objectsToBeUpdated.push({i: index});
+                UpdateObject(index, []);
+                //objectsToBeUpdated[index] = {v: []};
             }
         }
 
@@ -73,6 +70,7 @@ async function KillPlayer(player_id)
     const sockets = await io.fetchSockets();
 
     let socket;
+    let playerIndex = 0;
 
     for(let s of sockets)
     {
@@ -81,56 +79,67 @@ async function KillPlayer(player_id)
             socket = s;
             break;
         }
-    }
 
+        playerIndex++;
+    }
+    
     if(!socket)
     {
         console.log("Failed to kill player: socket with given id doesn't exist");
         return;
     }
+    
+    UpdateObject(playerIndex, []);
+
+    delete players[player_id];
 
     socket.emit("lose", {score: 0});
 }
 
 
 function GameLoop(timer) {
-    objectsToBeUpdated = [];
+    UpdatePhysics(timer);
 
-    UpdatePosition(timer);
-
-    EmitUpdate();
+    DispatchUpdates();
 
     timer.setTime((new Date).getTime())
-    //io.emit("update", { vertices: [{ x: -0.5, y: -0.5 }, { x: 0.5, y: -0.5 }, { x: 0.0, y: 0.7 }] })
 }
 
-async function EmitUpdate() {
+async function DispatchUpdates()
+{
+    await EmitUpdateToAll();
 
-    if (objectsToBeUpdated.length === 0) {
+    for(let o in objectsToBeUpdated)
+    {
+        delete objectsToBeUpdated[o];
+    }
+}
+
+async function EmitUpdateToAll() {
+    const sockets = await io.fetchSockets();
+    
+    EmitUpdateToSockets(sockets);
+}
+
+function EmitUpdateToSockets(sockets)
+{
+    if (Object.keys(objectsToBeUpdated).length === 0) {
         return;
     }
 
-    const sockets = await io.fetchSockets();
-
     let index = 0;
+
     for (let socket of sockets) {
-        let update = {
+        socket.emit("update", {
             id: index,
-            obj: [...objectsToBeUpdated]
-        }
+            obj: objectsToBeUpdated
+        });
 
-        update.obj[index] = {...update.obj[index]};
-
-        update.obj[index].pos = players[socket.id].pos;
-        update.obj[index].dir = players[socket.id].dir;
-        update.obj[index].hp = players[socket.id].hp;
-
-        socket.emit("update", update);
+        index++;
     }
-
 }
 
-function UpdatePosition(timer) {
+function UpdatePhysics(timer) {
     let date = new Date();
     let dTime = date.getTime() - timer.getTime();
 
@@ -159,7 +168,8 @@ function UpdatePosition(timer) {
             player.turretDir = player.turretDir.rotate((rot_speed + player.rotationSpeed) * dTime);
 
 
-            objectsToBeUpdated.push({ i: index, v: playersVert[index] });
+            UpdateObject(index, playersVert[index], {pos: player.pos, dir: player.dir, hp: player.hp});
+            //objectsToBeUpdated.push({ i: index, v: playersVert[index] });
         }
 
         index++;
@@ -199,7 +209,8 @@ function UpdatePosition(timer) {
             delete scene.bullets[bullet_i];
         }
 
-        objectsToBeUpdated.push({ i: index, v: vertices });
+        UpdateObject(index, vertices);
+        //objectsToBeUpdated.push({ i: index, v: vertices });
 
         index++;
     }

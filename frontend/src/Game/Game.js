@@ -37,7 +37,7 @@ export default class Game extends Component {
 
         this.playerId = -1;
         this.playerPos = new vec2(0, 0);
-        this.playerDir = new vec2();
+        this.playerDir = new vec2(0, 0);
         this.currentCameraOffset = new vec2(0, 0);
 
         this.objects = [];
@@ -62,22 +62,21 @@ export default class Game extends Component {
 
 
     OnUpdate(update) {
-        //console.log(update.obj);
+        console.log(update.obj);
 
         if (!(update && update.obj)) {
             console.log("Invalid data received from update");
             return;
         }
-
+        
         this.playerId = update.id;
 
         //Update local scene
-        for (let obj of update.obj) {
-            if (obj.i == this.objects.length) {
-                this.objects.push(obj);
-            }
-            else if (obj.i > this.objects.length) {
-                console.log("Couldn't add object at index ", obj.i);
+        for (let objInd in update.obj) {
+            const obj = update.obj[objInd];
+
+            if (this.objects[obj.i] === undefined) {
+                this.objects[obj.i] = obj;
             }
             else {
                 if(obj.v)
@@ -103,11 +102,21 @@ export default class Game extends Component {
 
         //Update position and direction
         let player = update.obj[update.id];
-        let pos = player.pos;
-        let dir = player.dir;
 
-        this.playerPos = new vec2(pos.x, pos.y);
-        this.playerDir = new vec2(dir.x, dir.y);
+        if(player)
+        {
+            if(player.pos)
+            {
+                this.playerPos = new vec2(player.pos.x, player.pos.y);
+            }
+            
+            if(player.dir)
+            {
+                this.playerDir = new vec2(player.dir.x, player.dir.y);
+            }
+        }
+
+        //console.log(this.vertices);
     }
 
     //This function is called independently of updates from server 
@@ -138,7 +147,6 @@ export default class Game extends Component {
             return;
 
         let dir = ToWorldSpace({ x: e.x, y: e.y });
-        console.log(dir, this.playerPos);
         dir = dir.add(this.currentCameraOffset);
         dir.x *= window.innerWidth / window.innerHeight;
         socket.emit("shoot", dir);
@@ -229,6 +237,8 @@ export default class Game extends Component {
 
         let offset = this.playerDir.scale(0.1).sub(this.currentCameraOffset);
 
+        //console.log(this.playerDir);
+
         const cam_movement_speed = 0.0003;
 
         if (offset.x > cam_movement_speed)
@@ -261,13 +271,13 @@ export default class Game extends Component {
             let vert = []
 
             for (let v in this.vertices) {
-                //console.log(vertices[v]);
+                //console.log(this.vertices[v], this.camera.view);
                 let vertex = new vec3(this.vertices[v].x, this.vertices[v].y, 1.0).mult(this.camera.view);
                 vert.push(new vec2(vertex.x, vertex.y));
-                //console.log(vertices[v]);
             }
 
 
+            //console.log(vert);
 
             Clear("#000000");
             DrawTriangles(vert, "#ffff00");
