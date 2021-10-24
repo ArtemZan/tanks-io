@@ -1,3 +1,15 @@
+.error
+{
+    color: #a00000;
+}
+
+.ui
+{
+    position: absolute;
+    top: 0;
+    color: white;
+}
+
 .message
 {
     

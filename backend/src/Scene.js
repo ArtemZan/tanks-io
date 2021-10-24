@@ -3,19 +3,18 @@ const scene = {
     bullets: []
 };
 
-const objectsToBeUpdated = {};
 
 
-function UpdateObject(id, vertices, other)
+function UpdateObject(objectsBuffer, id, vertices, otherData)
 {
-    if(other instanceof Object)
+    if(otherData instanceof Object)
     {
-        objectsToBeUpdated[id] = {i: id, v: vertices, ...other};
+        objectsBuffer[id] = {i: id, v: vertices, ...otherData};
     }
     else
     {
-        objectsToBeUpdated[id] = {i: id, v: vertices};
+        objectsBuffer[id] = {i: id, v: vertices};
     }
 }
 
-module.exports = {scene, objectsToBeUpdated, UpdateObject};
+module.exports = {scene, UpdateObject};

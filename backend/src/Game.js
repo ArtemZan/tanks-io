@@ -1,60 +1,46 @@
 const io = require("./Connection");
 const { vec2, DetectCollision } = require("./Math");
 const { Bullet } = require("./Object");
-const { players, PlayersCount, GetPlayer } = require("./Player");
+const { GetPlayers, rooms } = require("./Room");
 const { scene, objectsToBeUpdated, UpdateObject } = require("./Scene");
 
 
 
-
 let intervalId;
+let timer;
 
 function StartGame() {
-    let timer = new Date();
+    timer = new Date();
 
-    intervalId = setInterval(GameLoop.bind(null, timer), 10);
-
-    let i = 0;
-
-    for (let player_id in players) {
-        let v = players[player_id].Render();
-        UpdateObject(i, v);
-        //objectsToBeUpdated.push({ i, v });
-
-        i++;
-    }
-
-    DispatchUpdates();
+    intervalId = setInterval(UpdateGameState.bind(null, timer), 10);
 }
+
+StartGame();
+
 
 function StopGame() {
     clearInterval(intervalId);
 }
 
-function Explosion(bullet, hit_player_id)
-{
+function Explosion(bullet, hit_player_id) {
     console.log("Player died");
 
     let index = 0;
 
-    for(let player_id in players)
-    {
+    for (let player_id in players) {
         let player = players[player_id];
 
         let dist = bullet.pos.sub(player.pos).magnitude();
 
-        if(dist < 0.2)
-        {
+        if (dist < 0.2) {
 
             //Player near the explosion is also damaged
             player.hp -= (0.2 - (dist < 0.1 ? 0.1 : dist)) * 5;
-            if(player_id === hit_player_id)
-            {
+            if (player_id === hit_player_id) {
                 player.hp -= 2;
             }
 
-            if(player.hp <= 0)
-            {
+            if (player.hp <= 0) {
                 KillPlayer(player_id);
                 UpdateObject(index, []);
                 //objectsToBeUpdated[index] = {v: []};
@@ -65,83 +51,68 @@ function Explosion(bullet, hit_player_id)
     }
 }
 
-async function KillPlayer(player_id)
-{
+async function KillPlayer(player_id) {
     const sockets = await io.fetchSockets();
 
     let socket;
     let playerIndex = 0;
 
-    for(let s of sockets)
-    {
-        if(s.id === player_id)
-        {
+    for (let s of sockets) {
+        if (s.id === player_id) {
             socket = s;
             break;
         }
 
         playerIndex++;
     }
-    
-    if(!socket)
-    {
+
+    if (!socket) {
         console.log("Failed to kill player: socket with given id doesn't exist");
         return;
     }
-    
+
     UpdateObject(playerIndex, []);
 
     delete players[player_id];
 
-    socket.emit("lose", {score: 0});
+    socket.emit("lose", { score: 0 });
 }
 
 
-function GameLoop(timer) {
-    UpdatePhysics(timer);
+function UpdateGameState(timer) {
+    for (let roomId in rooms) {
 
-    DispatchUpdates();
+        let updatedObjects = {};
 
-    timer.setTime((new Date).getTime())
-}
+        UpdatePhysics(roomId, updatedObjects, timer);
 
-async function DispatchUpdates()
-{
-    await EmitUpdateToAll();
-
-    for(let o in objectsToBeUpdated)
-    {
-        delete objectsToBeUpdated[o];
+        EmitUpdateToRoom(roomId, updatedObjects);
     }
+
+    timer.setTime((new Date).getTime());
 }
 
-async function EmitUpdateToAll() {
-    const sockets = await io.fetchSockets();
-    
-    EmitUpdateToSockets(sockets);
-}
-
-function EmitUpdateToSockets(sockets)
+function EmitUpdateToRoom(id, updatedObjects)
 {
-    if (Object.keys(objectsToBeUpdated).length === 0) {
+    if (Object.keys(updatedObjects).length === 0) {
         return;
     }
 
     let index = 0;
 
-    for (let socket of sockets) {
-        socket.emit("update", {
-            id: index,
-            obj: objectsToBeUpdated
-        });
+    io.to(id).emit("update", {
+        id: index,
+        obj: updatedObjects
+    })
 
-        index++;
-    }
+    index++;
 }
 
-function UpdatePhysics(timer) {
+function UpdatePhysics(room, updatedObjects, timer) {
     let date = new Date();
     let dTime = date.getTime() - timer.getTime();
+
+    const players = GetPlayers(room);
 
     let playersVert = [];
 
@@ -168,7 +139,7 @@ function UpdatePhysics(timer) {
             player.turretDir = player.turretDir.rotate((rot_speed + player.rotationSpeed) * dTime);
 
 
-            UpdateObject(index, playersVert[index], {pos: player.pos, dir: player.dir, hp: player.hp});
+            UpdateObject(updatedObjects, index, playersVert[index], { pos: player.pos, dir: player.dir, hp: player.hp });
             //objectsToBeUpdated.push({ i: index, v: playersVert[index] });
         }
 
@@ -191,7 +162,7 @@ function UpdatePhysics(timer) {
             for (let playerVert of playersVert) {
                 if (playerIds[playerInd] != bullet.playerId) {
                     let collision = DetectCollision(playerVert, vertices);
-                    
+
                     if (collision) {
                         console.log("Hit");
 

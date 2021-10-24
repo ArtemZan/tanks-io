@@ -1,7 +1,7 @@
 import "./Game.css"
 import "./Windows/Windows.css"
 
-import { Component, createRef, useEffect, useState } from "react"
+import { Component, createRef } from "react"
 import {
     Init as InitDrawingLib,
     DrawTriangles,
@@ -9,17 +9,13 @@ import {
     Camera2D,
     vec2,
     vec3,
-    ToWindowSpace,
     ToWorldSpace
 } from "./Drawing";
 
 
-import io from "socket.io-client"
-import StartWindow from "./Windows/StartWindow";
 import { IsKeyDown, IsKeyUp, mousePos } from "./Input";
 import UI, { UIStates } from "./Windows/UI";
-const socket = io("http://localhost:3000", { transports: ['websocket'] });
-
+import { AddEventListenner, Connect, Emit } from "./Connection";
 
 export default class Game extends Component {
     constructor(props) {
@@ -45,9 +41,25 @@ export default class Game extends Component {
         this.keysPressed = [];
     }
 
+    OnConnect()
+    {
+        AddEventListenner("join", this.OnGameStarts.bind(this))
+
+        AddEventListenner("update", this.OnUpdate.bind(this))
+
+        AddEventListenner("lose", info => {
+            this.setState({ UI: { state: UIStates.lost, info } });
+
+            console.log("You lose");
+
+            this.OnGameStops();
+        })
+
+    }
+
     OnGameStarts() {
         console.log("The game begins!");
-        this.setState({ hasGameStarted: true });
+        this.setState({ hasGameStarted: true, UI: UIStates.playing });
 
         this.gameLoopId = setInterval(this.OnLocalUpdate.bind(this), 30);
     }
@@ -62,13 +74,13 @@ export default class Game extends Component {
 
 
     OnUpdate(update) {
-        console.log(update.obj);
+        console.table(update.obj);
 
         if (!(update && update.obj)) {
             console.log("Invalid data received from update");
             return;
         }
-        
+
         this.playerId = update.id;
 
         //Update local scene
@@ -79,8 +91,7 @@ export default class Game extends Component {
                 this.objects[obj.i] = obj;
             }
             else {
-                if(obj.v)
-                {
+                if (obj.v) {
                     if (obj.v.length) {
                         this.objects[obj.i].v = obj.v;
                     }
@@ -103,15 +114,12 @@ export default class Game extends Component {
         //Update position and direction
         let player = update.obj[update.id];
 
-        if(player)
-        {
-            if(player.pos)
-            {
+        if (player) {
+            if (player.pos) {
                 this.playerPos = new vec2(player.pos.x, player.pos.y);
             }
-            
-            if(player.dir)
-            {
+
+            if (player.dir) {
                 this.playerDir = new vec2(player.dir.x, player.dir.y);
             }
         }
@@ -149,67 +157,57 @@ export default class Game extends Component {
         let dir = ToWorldSpace({ x: e.x, y: e.y });
         dir = dir.add(this.currentCameraOffset);
         dir.x *= window.innerWidth / window.innerHeight;
-        socket.emit("shoot", dir);
+
+        Emit("shoot", dir);
+        //socket.emit("shoot", dir);
     }
 
     OnKeyDown(e) {
+        if (!this.state.hasGameStarted)
+            return;
+            
         this.keysPressed[e.key] = true;
 
         if (!this.state.hasGameStarted)
             return;
 
         if (IsKeyDown("w")) {
-            socket.emit("startMoving", true);
+            Emit("startMoving", true)
         }
 
         if (IsKeyDown("s")) {
-            socket.emit("startMoving", false);
+            Emit("startMoving", false);
         }
 
         if (IsKeyDown("a")) {
-            socket.emit("startRotating", false);
+            Emit("startRotating", false);
         }
 
         if (IsKeyDown("d")) {
-            socket.emit("startRotating", true);
+            Emit("startRotating", true);
         }
     }
 
     OnKeyUp(e) {
+        if (!this.state.hasGameStarted)
+            return;
+
         if (IsKeyUp("w") && IsKeyUp("s")) {
-            socket.emit("stopMoving");
+            Emit("stopMoving");
         }
 
         if (IsKeyUp("a") && IsKeyUp("d")) {
-            socket.emit("stopRotating");
+            Emit("stopRotating");
         }
     }
 
     componentDidMount() {
         InitDrawingLib(this.canvas.current);
 
-        socket.on("start", this.OnGameStarts.bind(this));
+        Connect();
 
-        socket.on("join", this.OnGameStarts.bind(this));
-
-
-        socket.on("end", () => {
-            console.log("The game finished!");
-            this.OnGameStops();
-        })
-
-        socket.on("update", this.OnUpdate.bind(this))
-
-        socket.on("lose", info => {
-            this.setState({ UI: { state: UIStates.lost, info } });
-
-            console.log("You lose");
-
-            this.OnGameStops();
-        })
-
-
-        console.log(this.canvas);
+        this.OnConnect();
+        
         window.addEventListener("resize", this.OnResize.bind(this));
         window.addEventListener("keydown", this.OnKeyDown.bind(this));
         window.addEventListener("keyup", this.OnKeyUp.bind(this));
@@ -226,7 +224,8 @@ export default class Game extends Component {
         let dir = ToWorldSpace(mousePos);
         dir = dir.add(this.currentCameraOffset);
         dir.x *= window.innerWidth / window.innerHeight;
-        socket.emit("startRotatingTurret", dir);
+
+        Emit("startRotatingTurret", dir);
     }
 
 
@@ -284,12 +283,12 @@ export default class Game extends Component {
         }
     }
 
-    
+
     render() {
         return (
             <div className="game">
 
-                {!this.state.hasGameStarted && <UI {...this.state.UI}/>}
+                <UI {...this.state.UI} />
 
                 <canvas ref={this.canvas}
                     style={{ visibility: this.state.hasGameStarted ? "visible" : "hidden" }} />

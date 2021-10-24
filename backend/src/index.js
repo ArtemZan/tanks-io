@@ -1,67 +1,88 @@
-const { 
-    PlayersCount, AddPlayer, RemovePlayer, 
-    StartRotatingPlayer, StopRotatingPlayer, StartRotatingTurret, StopRotatingTurret,
-    Shoot, StartMovingPlayer, StopMovingPlayer
-} = require("./Player");
+const { DoesRoomExist, GenRoomCode, AddPlayer, RemovePlayer, GetPlayer, GetPlayerById, rooms, AddRoom } = require("./Room")
 
-const {StartGame, StopGame} = require("./Game");
+const { StartGame, StopGame } = require("./Game");
 const io = require("./Connection");
 
 
 io.on("connection", client => {
-    console.log("New player,", PlayersCount() + 1, "now");
+    client.on("join", Join.bind(null, client));
 
-    AddPlayer(client.id);
-
-    if (PlayersCount() === 2) {
-        io.emit("start");
-        StartGame();
-    }
-    else if(PlayersCount() >= 2)
-    {
-        client.emit("join");
-    }
+    client.on("createRoom", CreateRoom.bind(null, client));
 
     client.on("disconnect", () => {
-        RemovePlayer(client.id);
+        console.log(rooms);
 
-        console.log("A player disconnected,", PlayersCount(), "players remain");
-
-        if (PlayersCount() <= 1) {
-            console.log("Not enough players, the game ends");
-            io.emit("end");
-
-            StopGame();
+        let player = GetPlayerById(client.id);
+        
+        if(player)
+        {
+            RemovePlayer(player.room, client.id);
         }
+
+        console.log("A player disconnected");
+
+        client.leave(client.rooms);
     })
 
 
     client.on("startMoving", ahead => {
-        StartMovingPlayer(client.id, ahead);
+        GetPlayerById(client.id).StartMoving(ahead);
     })
 
     client.on("stopMoving", () => {
-        StopMovingPlayer(client.id);
+        GetPlayerById(client.id).StopMoving();
     })
-    
+
     client.on("startRotating", clockwise => {
-        StartRotatingPlayer(client.id, clockwise);
+        GetPlayerById(client.id).StartRotating(clockwise);
     })
 
     client.on("stopRotating", () => {
-        StopRotatingPlayer(client.id);
+        GetPlayerById(client.id).StopRotating();
     })
 
     client.on("startRotatingTurret", dir => {
-        StartRotatingTurret(client.id, dir);
+        console.log("Turret of player with id: " + client.id + " started moveing")
+        GetPlayerById(client.id).StartRotatingTurret(dir);
     })
-    
+
     client.on("stopRotatingTurret", () => {
-        StopRotatingTurret(client.id);
+        GetPlayerById(client.id).StopRotatingTurret();
     })
 
 
     client.on("shoot", () => {
-        Shoot(client.id);
+        GetPlayerById(client.id).Shoot();
     })
 })
+
+function Join(client, code) {
+    if (DoesRoomExist(code)) {
+        client.join(code);
+        AddPlayer(code, client.id);
+
+        switch(io.sockets.adapter.rooms.get(code).size)
+        {
+            case 1: break;
+            case 2: io.to(code).emit("join", code); break;
+            default: client.emit("join", code);
+        }
+    }
+    else {
+        client.emit("wrongCode");
+    }
+}
+
+function CreateRoom(client) {
+    const code = GenRoomCode();
+
+    console.log("Created room with code ", code);
+
+    client.join(code);
+    AddRoom(code);
+    AddPlayer(code, client.id);
+
+    console.log("Joined player with id: " + client.id)
+
+    client.emit("wait", code);
+}
