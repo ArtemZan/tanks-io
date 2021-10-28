@@ -1,4 +1,5 @@
 const { vec2, matrix2x2 } = require("./Math");
+const rooms = require("./Rooms");
 
 function Rect(x, y, color) {
     let vert = [];
@@ -130,7 +131,7 @@ class Player extends Object {
         bullet.pos = this.pos;
         bullet.speed = 0.001;
 
-        scene.bullets.push(bullet);
+        rooms[this.room].scene.bullets.push(bullet);
     }
 
 
@@ -168,7 +169,6 @@ class Bullet extends Object {
 
         Move(vertices, this.pos);
 
-        //buffer.push(...vertices);
         return vertices;
     }
 }

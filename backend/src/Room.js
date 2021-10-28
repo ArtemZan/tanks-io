@@ -1,5 +1,6 @@
 const { Player } = require("./Object");
 const io = require("./Connection");
+const rooms = require("./Rooms");
 
 class Room
 {
@@ -25,8 +26,6 @@ class Room
         delete this.players[id];
     }
 }
-
-const rooms = {};
 
 function AddRoom(id)
 {
@@ -87,10 +86,13 @@ function GetPlayer(room, id)
     return GetPlayers(room)[id];
 }
 
-function GetPlayerById(id)
+function GetIndexOfPlayerInRoom(room, id)
 {
-    console.log(id, rooms);
-    
+    return Object.keys(GetPlayers(room)).indexOf(id);
+}
+
+function GetPlayerById(id)
+{    
     for(let room in rooms)
     {
         let player = GetPlayers(room)[id];
@@ -106,5 +108,6 @@ module.exports = {
     AddRoom,
     DeleteRoom, DoesRoomExist, GenRoomCode, rooms,
 
-    AddPlayer, RemovePlayer, GetPlayers, GetPlayer, GetPlayerById
+    AddPlayer, RemovePlayer, 
+    GetPlayers, GetPlayer, GetPlayerById, GetIndexOfPlayerInRoom
 }

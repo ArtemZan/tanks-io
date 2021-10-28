@@ -23,7 +23,6 @@ export default class Game extends Component {
 
         this.state = {
             hasGameStarted: false,
-            UI: { state: UIStates.waitingForPlayers }
         };
 
         this.canvas = createRef();
@@ -48,8 +47,6 @@ export default class Game extends Component {
         AddEventListenner("update", this.OnUpdate.bind(this))
 
         AddEventListenner("lose", info => {
-            this.setState({ UI: { state: UIStates.lost, info } });
-
             console.log("You lose");
 
             this.OnGameStops();
@@ -74,7 +71,7 @@ export default class Game extends Component {
 
 
     OnUpdate(update) {
-        console.table(update.obj);
+        //console.log(update);
 
         if (!(update && update.obj)) {
             console.log("Invalid data received from update");
@@ -87,16 +84,16 @@ export default class Game extends Component {
         for (let objInd in update.obj) {
             const obj = update.obj[objInd];
 
-            if (this.objects[obj.i] === undefined) {
-                this.objects[obj.i] = obj;
+            if (this.objects[objInd] === undefined) {
+                this.objects[objInd] = obj;
             }
             else {
                 if (obj.v) {
                     if (obj.v.length) {
-                        this.objects[obj.i].v = obj.v;
+                        this.objects[objInd].v = obj.v;
                     }
                     else {
-                        delete this.objects[obj.i];
+                        delete this.objects[objInd];
                     }
                 }
             }

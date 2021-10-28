@@ -1,8 +1,7 @@
 const io = require("./Connection");
-const { vec2, DetectCollision } = require("./Math");
-const { Bullet } = require("./Object");
-const { GetPlayers, rooms } = require("./Room");
-const { scene, objectsToBeUpdated, UpdateObject } = require("./Scene");
+const { DetectCollision } = require("./Math");
+const { GetPlayers, rooms, RemovePlayer, GetIndexOfPlayerInRoom } = require("./Room");
+const { UpdateObject } = require("./Scene");
 
 
 
@@ -22,10 +21,10 @@ function StopGame() {
     clearInterval(intervalId);
 }
 
-function Explosion(bullet, hit_player_id) {
-    console.log("Player died");
-
+function Explosion(room, updatedObjects, bullet, hit_player_id) {
     let index = 0;
+
+    const players = GetPlayers(room);
 
     for (let player_id in players) {
         let player = players[player_id];
@@ -40,10 +39,11 @@ function Explosion(bullet, hit_player_id) {
                 player.hp -= 2;
             }
 
+            console.log(bullet.playerId, hit_player_id);
+            
             if (player.hp <= 0) {
-                KillPlayer(player_id);
-                UpdateObject(index, []);
-                //objectsToBeUpdated[index] = {v: []};
+                console.log(GetPlayers(room), bullet.playerId);
+                KillPlayer(room, updatedObjects, index, GetIndexOfPlayerInRoom(room, bullet.playerId));
             }
         }
 
@@ -51,31 +51,39 @@ function Explosion(bullet, hit_player_id) {
     }
 }
 
-async function KillPlayer(player_id) {
-    const sockets = await io.fetchSockets();
+async function KillPlayer(room, updatedObjects, killed_player_ind, killer_ind) {
+    
+    //RemovePlayer(room, players[killed_player_ind]);
+    
+    UpdateObject(updatedObjects, killed_player_ind, []);
+    
+    
+    const sockets = await io.fetchSockets(); 
+    //Array.from(io.sockets.adapter.rooms.get(room));
 
-    let socket;
-    let playerIndex = 0;
-
-    for (let s of sockets) {
-        if (s.id === player_id) {
-            socket = s;
-            break;
+    for(let i = 0; i < sockets.length; i++)
+    {
+        let info = {};
+        if(i === killed_player_ind)
+        {
+            info.info = {score: 0}; // for now always 0
         }
 
-        playerIndex++;
+        let assists = {};
+        if(i === killer_ind)
+        {
+            assists.assists = [];
+        }
+
+        console.log("Someone died");
+
+        sockets[i].emit("killed", {
+            id: i, 
+            killed: killed_player_ind, 
+            killer: killer_ind, 
+            ...info, 
+            ...assists}); //No assists for now
     }
-
-    if (!socket) {
-        console.log("Failed to kill player: socket with given id doesn't exist");
-        return;
-    }
-
-    UpdateObject(playerIndex, []);
-
-    delete players[player_id];
-
-    socket.emit("lose", { score: 0 });
 }
 
 
@@ -92,27 +100,27 @@ function UpdateGameState(timer) {
     timer.setTime((new Date).getTime());
 }
 
-function EmitUpdateToRoom(id, updatedObjects)
-{
+async function EmitUpdateToRoom(room, updatedObjects) {
     if (Object.keys(updatedObjects).length === 0) {
         return;
     }
 
-    let index = 0;
+    const clients = Array.from(io.sockets.adapter.rooms.get(room));
 
-    io.to(id).emit("update", {
-        id: index,
-        obj: updatedObjects
-    })
 
-    index++;
+    for (let ind in clients) {
+        io.sockets.sockets.get(clients[ind]).emit("update", {
+            id: ind,
+            obj: updatedObjects
+        })
+    }
 }
 
 function UpdatePhysics(room, updatedObjects, timer) {
     let date = new Date();
     let dTime = date.getTime() - timer.getTime();
 
-    const players = GetPlayers(room);
+    const players = Object.values(GetPlayers(room));
 
     let playersVert = [];
 
@@ -146,7 +154,7 @@ function UpdatePhysics(room, updatedObjects, timer) {
         index++;
     }
 
-    let playerIds = Object.keys(players);
+    let scene = rooms[room].scene;
 
     for (let bullet_i in scene.bullets) {
         let bullet = scene.bullets[bullet_i];
@@ -159,14 +167,15 @@ function UpdatePhysics(room, updatedObjects, timer) {
             vertices = bullet.Render();
 
             let playerInd = 0;
+
             for (let playerVert of playersVert) {
-                if (playerIds[playerInd] != bullet.playerId) {
+                if (players[playerInd].id != bullet.playerId) {
                     let collision = DetectCollision(playerVert, vertices);
 
                     if (collision) {
                         console.log("Hit");
 
-                        Explosion(bullet, playerIds[playerInd]);
+                        Explosion(room, updatedObjects, bullet, players[playerInd].id);
 
                         delete scene.bullets[bullet_i];
                         vertices = [];
@@ -180,7 +189,7 @@ function UpdatePhysics(room, updatedObjects, timer) {
             delete scene.bullets[bullet_i];
         }
 
-        UpdateObject(index, vertices);
+        UpdateObject(updatedObjects, index, vertices);
         //objectsToBeUpdated.push({ i: index, v: vertices });
 
         index++;

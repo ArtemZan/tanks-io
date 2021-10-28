@@ -15,8 +15,11 @@ const UIStates = {
 }
 
 export default function UI(props) {
-    let [error, DisplayError] = useState(false);
     let [code, SetRoomCode] = useState("");
+    let [uiProps, SetUIProps] = useState({
+        CreateRoom,
+        Join
+    });
     let [state, SetUIState] = useState(UIStates.start);
 
     useEffect(() => {
@@ -29,19 +32,28 @@ export default function UI(props) {
 
         AddEventListenner("wait", code => {
             SetRoomCode(code);
-            SetUIState(UIStates.waitingForPlayers)
+            SetUIState(UIStates.waitingForPlayers);
+            SetUIProps({code});
+        })
+
+        AddEventListenner("killed", data => {
+            console.log("Someone died: ", data);
+
+            if(data.id === data.killed)
+            {
+                console.log("I died :(");
+
+                SetUIState(UIStates.lost);
+                SetUIProps(data.info);
+            }
         })
     }, [])
 
-    // if (props.state === undefined) {
-    //     console.log("State not given in props")wa
-    //     return null;
-    // }
 
     let result = null;
 
     function JoinGame() {
-        DisplayError(false);
+        SetUIProps({code});
         SetUIState(UIStates.playing);
     }
 
@@ -55,7 +67,10 @@ export default function UI(props) {
 
     function WrongCode() {
         console.log("error");
-        DisplayError(true);
+        SetUIProps({
+            ...uiProps,
+            error: "There is no room with given code"
+        });
     }
 
 
@@ -63,22 +78,22 @@ export default function UI(props) {
     switch (state) {
         case UIStates.start:
             {
-                result = <StartWindow error={error ? "There is no room with given code" : ""} CreateRoom={CreateRoom} Join={Join} {...(props.props ? props.props : {})} />;
+                result = <StartWindow {...uiProps} />;
                 break;
             }
         case UIStates.waitingForPlayers:
             {
-                result = <Waiting code = {code} />
+                result = <Waiting {...uiProps} />
                 break;
             }
         case UIStates.playing:
             {
-                result = <GameUI code = {code} />
+                result = <GameUI {...uiProps} />
                 break;
             }
         case UIStates.lost:
             {
-                result = <LoseWindow {...(props.props ? props.props : {})} />;
+                result = <LoseWindow {...uiProps} />;
                 break;
             }
     }

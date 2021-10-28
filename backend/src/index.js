@@ -42,7 +42,6 @@ io.on("connection", client => {
     })
 
     client.on("startRotatingTurret", dir => {
-        console.log("Turret of player with id: " + client.id + " started moveing")
         GetPlayerById(client.id).StartRotatingTurret(dir);
     })
 
@@ -76,13 +75,9 @@ function Join(client, code) {
 function CreateRoom(client) {
     const code = GenRoomCode();
 
-    console.log("Created room with code ", code);
-
     client.join(code);
     AddRoom(code);
     AddPlayer(code, client.id);
-
-    console.log("Joined player with id: " + client.id)
 
     client.emit("wait", code);
 }
