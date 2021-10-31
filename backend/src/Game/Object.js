@@ -1,5 +1,5 @@
-const { vec2, matrix2x2 } = require("./Math");
-const rooms = require("./Rooms");
+const { vec2, matrix2x2 } = require("../Math/Math");
+const rooms = require("../Rooms");
 
 function Rect(x, y, color) {
     let vert = [];
@@ -92,6 +92,8 @@ class Player extends Object {
 
         this.hp = 10;
 
+        this.rotationSpeed = 0;
+
         this.aim = new vec2(0, 1);
         this.turretDir = new vec2(0, 1);
         this.turretRotationSpeed = 0;
@@ -132,6 +134,8 @@ class Player extends Object {
         bullet.speed = 0.001;
 
         rooms[this.room].scene.bullets.push(bullet);
+
+        //console.log(bullet);
     }
 
 

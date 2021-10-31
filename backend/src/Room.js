@@ -1,5 +1,5 @@
-const { Player } = require("./Object");
-const io = require("./Connection");
+const { Player } = require("./Game/Object");
+const io = require("./Connection/Connection");
 const rooms = require("./Rooms");
 
 class Room
@@ -10,20 +10,19 @@ class Room
 
         this.scene = {
             obstacles: [],
-            bullets: []
+            bullets: [],
+            players: {}
         }
-
-        this.players = {};
     }
 
     AddPlayer(id)
     {
-        this.players[id] = new Player(this.id, id);
+        this.scene.players[id] = new Player(this.id, id);
     }
 
     RemovePlayer(id)
     {
-        delete this.players[id];
+        delete this.scene.players[id];
     }
 }
 
@@ -78,7 +77,7 @@ function RemovePlayer(room, id)
 
 function GetPlayers(room)
 {
-    return rooms[room].players;
+    return rooms[room].scene.players;
 }
 
 function GetPlayer(room, id)
@@ -103,11 +102,29 @@ function GetPlayerById(id)
     }
 }
 
+async function EmitUpdate(room, updatedObjects) {
+    if (Object.keys(updatedObjects).length === 0) {
+        return;
+    }
+
+    const clients = Array.from(io.sockets.adapter.rooms.get(room));
+
+
+    for (let ind in clients) {
+        io.sockets.sockets.get(clients[ind]).emit("update", {
+            id: ind,
+            obj: updatedObjects
+        })
+    }
+}
+
 module.exports = {
     Room,
     AddRoom,
     DeleteRoom, DoesRoomExist, GenRoomCode, rooms,
 
     AddPlayer, RemovePlayer, 
-    GetPlayers, GetPlayer, GetPlayerById, GetIndexOfPlayerInRoom
+    GetPlayers, GetPlayer, GetPlayerById, GetIndexOfPlayerInRoom,
+
+    EmitUpdate
 }

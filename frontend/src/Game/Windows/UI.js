@@ -43,8 +43,16 @@ export default function UI(props) {
             {
                 console.log("I died :(");
 
+                
                 SetUIState(UIStates.lost);
                 SetUIProps(data.info);
+            }
+            else
+            {
+                if(data.playersRemain === 1)
+                {
+                    SetUIState(UIStates.waitingForPlayers);
+                }
             }
         })
     }, [])
