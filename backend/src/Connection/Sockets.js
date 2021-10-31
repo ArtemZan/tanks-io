@@ -1,7 +1,6 @@
 //This file handles connections, adding sockets and players to rooms and client events
 
 const { DoesRoomExist, GenRoomCode, AddPlayer, RemovePlayer, GetPlayerById, AddRoom } = require("../Room")
-
 const io = require("./Connection")
 
 io.on("connection", client => {
@@ -15,7 +14,6 @@ io.on("connection", client => {
 
 
     client.on("startMoving", ahead => {
-        console.log("Move");
         GetPlayerById(client.id).StartMoving(ahead);
     })
 

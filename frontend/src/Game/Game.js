@@ -46,12 +46,12 @@ export default class Game extends Component {
 
         AddEventListenner("update", this.OnUpdate.bind(this))
 
-        AddEventListenner("lose", info => {
-            console.log("You lose");
-
-            this.OnGameStops();
-        })
-
+        AddEventListenner("killed", data => {
+            if(data.id === data.killed || data.playersRemain === 1)
+            {
+                this.OnGameStops();
+            }
+        });
     }
 
     OnGameStarts() {
@@ -71,7 +71,7 @@ export default class Game extends Component {
 
 
     OnUpdate(update) {
-        //console.log(update);
+        console.log(update);
 
         if (!(update && update.obj)) {
             console.log("Invalid data received from update");
@@ -159,10 +159,7 @@ export default class Game extends Component {
         //socket.emit("shoot", dir);
     }
 
-    OnKeyDown(e) {
-        if (!this.state.hasGameStarted)
-            return;
-            
+    OnKeyDown(e) {            
         this.keysPressed[e.key] = true;
 
         if (!this.state.hasGameStarted)

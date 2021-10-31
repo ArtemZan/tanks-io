@@ -8,8 +8,4 @@ http.listen(PORT, () => {
     console.log(`Listenning on port ${PORT}`);
 });
 
-http.addListener("close", () => {
-    console.log("Server closed");
-})
-
 module.exports = io;
