@@ -118,6 +118,29 @@ class Player extends Object {
         this.rotationSpeed = 0;
     }
 
+    CalculateTurretRotationSpeed() {
+        const rotSpeedK = 0.003;
+        let rotSpeed = 0;
+    
+        let angleDif = this.aim.sub(this.turretDir).magnitude();
+    
+        let dir = 1;
+        if (this.aim.cross(this.turretDir).z > 0) {
+            dir = -1;
+        }
+    
+        if (angleDif < 5e-2) {
+            if (angleDif > 1e-3) {
+                rotSpeed = angleDif * dir * rotSpeedK;
+            }
+        }
+        else {
+            rotSpeed = dir * rotSpeedK;
+        }
+    
+        return rotSpeed;
+    }
+
     StartRotatingTurret(dir) {
         this.aim = new vec2(dir.x, dir.y).normalize();
     }

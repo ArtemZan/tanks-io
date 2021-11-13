@@ -1,6 +1,7 @@
 //This file handles connections, adding sockets and players to rooms and client events
 
 const { DoesRoomExist, GenRoomCode, AddPlayer, RemovePlayer, GetPlayerById, AddRoom } = require("../Room")
+const rooms = require("../Rooms");
 const io = require("./Connection")
 
 io.on("connection", client => {
@@ -56,7 +57,7 @@ function Disconnect(client) {
 }
 
 function Join(client, code) {
-    console.log("A player joined a room");
+    console.log("A player joined a room", code, io.sockets.adapter.rooms);
 
     if (DoesRoomExist(code)) {
         client.join(code);

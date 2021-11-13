@@ -4,8 +4,9 @@ import LoseWindow from "./LoseWindow";
 import StartWindow from "./StartWindow";
 import GameUI from "./GameUI";
 
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Waiting from "./Waiting";
+import { gameStateContext } from "../State";
 
 const UIStates = {
     waitingForPlayers: 0,
@@ -15,42 +16,36 @@ const UIStates = {
 }
 
 export default function UI(props) {
-    let [code, SetRoomCode] = useState("");
-    let [uiProps, SetUIProps] = useState({
-        CreateRoom,
-        Join
-    });
-    let [state, SetUIState] = useState(UIStates.start);
+    let [uiProps, SetUIProps] = useState({});
+    let [uiState, SetUIState] = useState(UIStates.start);
+
+    const { state, SetState, UpdateState } = useContext(gameStateContext);
 
     useEffect(() => {
         AddEventListenner("wrongCode", WrongCode);
 
         AddEventListenner("join", code => {
-            SetRoomCode(code);
+            UpdateState({ roomCode: code });
             JoinGame();
         })
 
         AddEventListenner("wait", code => {
-            SetRoomCode(code);
+            UpdateState({ roomCode: code });
             SetUIState(UIStates.waitingForPlayers);
-            SetUIProps({code});
+            SetUIProps({ code });
         })
 
         AddEventListenner("killed", data => {
             console.log("Someone died: ", data);
 
-            if(data.id === data.killed)
-            {
+            if (data.id === data.killed) {
                 console.log("I died :(");
 
-                
                 SetUIState(UIStates.lost);
                 SetUIProps(data.info);
             }
-            else
-            {
-                if(data.playersRemain === 1)
-                {
+            else {
+                if (data.playersRemain === 1) {
                     SetUIState(UIStates.waitingForPlayers);
                 }
             }
@@ -61,16 +56,7 @@ export default function UI(props) {
     let result = null;
 
     function JoinGame() {
-        SetUIProps({code});
         SetUIState(UIStates.playing);
-    }
-
-    function Join(code) {
-        Emit("join", code);
-    }
-
-    function CreateRoom() {
-        Emit("createRoom");
     }
 
     function WrongCode() {
@@ -83,7 +69,7 @@ export default function UI(props) {
 
 
 
-    switch (state) {
+    switch (uiState) {
         case UIStates.start:
             {
                 result = <StartWindow {...uiProps} />;
@@ -107,9 +93,9 @@ export default function UI(props) {
     }
 
     return (
-    <div className = "ui">
-        {result}
-    </div>);
+        <div className="ui">
+            {result}
+        </div>);
 }
 
 export {

@@ -35,7 +35,7 @@ export default class Game extends Component {
         this.playerDir = new vec2(0, 0);
         this.currentCameraOffset = new vec2(0, 0);
 
-        this.objects = [];
+        this.objects = {};
         this.vertices = [];
         this.keysPressed = [];
     }
@@ -56,7 +56,7 @@ export default class Game extends Component {
 
     OnGameStarts() {
         console.log("The game begins!");
-        this.setState({ hasGameStarted: true, UI: UIStates.playing });
+        this.setState({ hasGameStarted: true });
 
         this.gameLoopId = setInterval(this.OnLocalUpdate.bind(this), 30);
     }
@@ -99,12 +99,10 @@ export default class Game extends Component {
             }
         }
 
-        //Remove deleted(undefined) objects
-        this.objects = this.objects.filter(el => el);
 
         //Update vertices
         this.vertices = [];
-        for (let o of this.objects) {
+        for (let o of Object.values(this.objects)) {
             this.vertices.push(...o.v);
         }
 
@@ -282,7 +280,7 @@ export default class Game extends Component {
         return (
             <div className="game">
 
-                <UI {...this.state.UI} />
+                <UI />
 
                 <canvas ref={this.canvas}
                     style={{ visibility: this.state.hasGameStarted ? "visible" : "hidden" }} />

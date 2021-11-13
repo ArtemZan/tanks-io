@@ -2,13 +2,16 @@
 import "./App.css"
 
 import Game from "./Game/Game";
+import { GameStateProvider } from "./Game/State";
 
 
 
 function App() {
   return (
     <div className="app">
-      <Game />
+      <GameStateProvider>
+        <Game />
+      </GameStateProvider>
     </div>
   );
 }

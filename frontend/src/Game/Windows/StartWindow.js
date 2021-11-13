@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Emit } from "../Connection";
 
 export default function StartWindow(props)
 {
@@ -6,26 +7,12 @@ export default function StartWindow(props)
 
     function Join()
     {
-        if(props.Join)
-        {
-            props.Join(code);
-        }
-        else
-        {
-            console.warn("Join callback not given")
-        }
+        Emit("join", code);
     }
 
     function CreateRoom()
     {
-        if(props.CreateRoom)
-        {
-            props.CreateRoom();
-        }
-        else
-        {
-            console.warn("CreateRoom callback not given")
-        }
+        Emit("createRoom");
     }
 
     return(

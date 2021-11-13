@@ -1,6 +1,7 @@
 const { Player } = require("./Game/Object");
 const io = require("./Connection/Connection");
 const rooms = require("./Rooms");
+const { Socket } = require("socket.io");
 
 class Room
 {
@@ -90,6 +91,11 @@ function GetIndexOfPlayerInRoom(room, id)
     return Object.keys(GetPlayers(room)).indexOf(id);
 }
 
+function GetPlayerByIndex(room_id, index)
+{
+    return Object.values(GetPlayers(room_id))[index];
+}
+
 function GetPlayerById(id)
 {    
     for(let room in rooms)
@@ -111,8 +117,10 @@ async function EmitUpdate(room, updatedObjects) {
 
 
     for (let ind in clients) {
-        io.sockets.sockets.get(clients[ind]).emit("update", {
-            id: ind,
+        const socket = io.sockets.sockets.get(clients[ind]);
+
+        socket.emit("update", {
+            id: socket.id,
             obj: updatedObjects
         })
     }
@@ -124,7 +132,7 @@ module.exports = {
     DeleteRoom, DoesRoomExist, GenRoomCode, rooms,
 
     AddPlayer, RemovePlayer, 
-    GetPlayers, GetPlayer, GetPlayerById, GetIndexOfPlayerInRoom,
+    GetPlayers, GetPlayer, GetPlayerById, GetIndexOfPlayerInRoom, GetPlayerByIndex,
 
     EmitUpdate
 }
