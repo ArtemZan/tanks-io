@@ -200,4 +200,14 @@ class Bullet extends Object {
     }
 }
 
-module.exports = { Object, Bullet, Player }
+function RenderObjects(objects) {
+    let res = {};
+
+    for (let object in objects) {
+        res[object] = objects[object].Render();
+    }
+
+    return res;
+}
+
+module.exports = { Object, Bullet, Player, RenderObjects }

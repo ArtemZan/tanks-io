@@ -1,12 +1,9 @@
-const { Player } = require("./Game/Object");
-const io = require("./Connection/Connection");
+const { Player, RenderObjects } = require("./Game/Object");
+const { io, GetSocket } = require("./Connection/Connection");
 const rooms = require("./Rooms");
-const { Socket } = require("socket.io");
 
-class Room
-{
-    constructor(id)
-    {
+class Room {
+    constructor(id) {
         this.id = id;
 
         this.scene = {
@@ -16,24 +13,38 @@ class Room
         }
     }
 
-    AddPlayer(id)
-    {
+    AddPlayer(id) {
         this.scene.players[id] = new Player(this.id, id);
     }
 
-    RemovePlayer(id)
-    {
+    RemovePlayer(id) {
         delete this.scene.players[id];
+    }
+
+    RenderScene() {
+        const scene = this.scene;
+
+        let renderedScene = {}
+
+        const players = RenderObjects(scene.players);
+        const other = RenderObjects([...scene.bullets, ...scene.obstacles]);
+
+        renderedScene = { ...players, ...other };
+
+        for(let id in renderedScene)
+        {
+            renderedScene[id] = {v: renderedScene[id]};
+        }
+
+        return renderedScene;
     }
 }
 
-function AddRoom(id)
-{
+function AddRoom(id) {
     rooms[id] = new Room(id);
 }
 
-function DeleteRoom(id)
-{
+function DeleteRoom(id) {
     delete rooms[id];
 }
 
@@ -53,7 +64,6 @@ function GenRoomCode() {
 
     let code;
 
-    //Not the best solution
     do {
         code = "";
         for (let c = 0; c < length; c++) {
@@ -66,43 +76,39 @@ function GenRoomCode() {
 }
 
 
-function AddPlayer(room, id)
-{
-    rooms[room].AddPlayer(id);
+function AddPlayer(room_id, id) {
+    rooms[room_id].AddPlayer(id);
+
+    GetSocket(id).emit("update", {
+        id: id,
+        obj: rooms[room_id].RenderScene(room_id)
+    })
 }
 
-function RemovePlayer(room, id)
-{
+function RemovePlayer(room, id) {
     rooms[room].RemovePlayer(id);
 }
 
-function GetPlayers(room)
-{
+function GetPlayers(room) {
     return rooms[room].scene.players;
 }
 
-function GetPlayer(room, id)
-{
+function GetPlayer(room, id) {
     return GetPlayers(room)[id];
 }
 
-function GetIndexOfPlayerInRoom(room, id)
-{
+function GetIndexOfPlayerInRoom(room, id) {
     return Object.keys(GetPlayers(room)).indexOf(id);
 }
 
-function GetPlayerByIndex(room_id, index)
-{
+function GetPlayerByIndex(room_id, index) {
     return Object.values(GetPlayers(room_id))[index];
 }
 
-function GetPlayerById(id)
-{    
-    for(let room in rooms)
-    {
+function GetPlayerById(id) {
+    for (let room in rooms) {
         let player = GetPlayers(room)[id];
-        if(player !== undefined)
-        {
+        if (player !== undefined) {
             return player;
         }
     }
@@ -131,7 +137,7 @@ module.exports = {
     AddRoom,
     DeleteRoom, DoesRoomExist, GenRoomCode, rooms,
 
-    AddPlayer, RemovePlayer, 
+    AddPlayer, RemovePlayer,
     GetPlayers, GetPlayer, GetPlayerById, GetIndexOfPlayerInRoom, GetPlayerByIndex,
 
     EmitUpdate

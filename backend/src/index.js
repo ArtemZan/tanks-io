@@ -1,2 +1,4 @@
 require("./Connection/Sockets");
-require("./Game/Game");
+const {StartGame} = require("./Game/GameLoop");
+
+StartGame();

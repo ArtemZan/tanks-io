@@ -2,7 +2,7 @@
 
 const { DoesRoomExist, GenRoomCode, AddPlayer, RemovePlayer, GetPlayerById, AddRoom } = require("../Room")
 const rooms = require("../Rooms");
-const io = require("./Connection")
+const {io} = require("./Connection")
 
 io.on("connection", client => {
     console.log("New connection");

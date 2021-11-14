@@ -1,34 +1,36 @@
 const io = require("../Connection/Connection");
 const { DetectCollision } = require("../Math/Math");
-const { GetPlayers, EmitUpdate, rooms, GetIndexOfPlayerInRoom, GetPlayerByIndex } = require("../Room");
+const { GetPlayers, rooms } = require("../Room");
+const { RenderObjects } = require("./Object");
+
+function UpdateGame(room, timer) {
+    //Get change of time since last update
+    let date = new Date();
+    let dTime = date.getTime() - timer.getTime();
+
+    //Buffer for all objects that must update
+    let updatedObjects = {};
 
 
+    const players = rooms[room].scene.players;
 
-let intervalId;
-let timer;
+    const playersVert = RenderObjects(Object.values(players));
+    const playersVertMap = Object.keys(players).reduce((res, id, index) => {
+        res[id] = playersVert[index]; 
+        return res
+    }, {});
 
-function StartGame() {
-    timer = new Date();
+    const updatedPlayers = UpdatePlayers(playersVertMap, players, dTime);
 
-    intervalId = setInterval(UpdateGames.bind(null, timer), 30);
-}
+    updatedObjects = { ...updatedObjects, ...updatedPlayers };
 
-StopGame();
-StartGame();
 
-function StopGame() {
-    intervalId !== undefined && clearInterval(intervalId);
-}
+    const updatedBullets = UpdateBullets(room, playersVertMap, dTime);
 
-//The game loop
-function UpdateGames(timer) {
-    for (let roomId in rooms) {
-        const updatedObjects = UpdateGame(roomId, timer);
+    updatedObjects = { ...updatedObjects, ...updatedBullets };
 
-        EmitUpdate(roomId, updatedObjects);
-    }
 
-    timer.setTime((new Date).getTime());
+    return updatedObjects;
 }
 
 
@@ -96,16 +98,6 @@ function Explosion(room_id, bullet, hit_player_id) {
     }
 
     return killed;
-}
-
-function RenderObjects(objects) {
-    let res = [];
-
-    for (let object of objects) {
-        res.push(object.Render());
-    }
-
-    return res;
 }
 
 //Returns whether the player was updated
@@ -216,34 +208,4 @@ function UpdateBullets(room, players_vertices, d_time) {
     return updatedObjects;
 }
 
-function UpdateGame(room, timer) {
-    //Get change of time since last update
-    let date = new Date();
-    let dTime = date.getTime() - timer.getTime();
-
-    //Buffer for all objects that must update
-    let updatedObjects = {};
-
-
-    const players = rooms[room].scene.players;
-
-    const playersVert = RenderObjects(Object.values(players));
-    const playersVertMap = Object.keys(players).reduce((res, id, index) => {
-        res[id] = playersVert[index]; 
-        return res
-    }, {});
-
-    const updatedPlayers = UpdatePlayers(playersVertMap, players, dTime);
-
-    updatedObjects = { ...updatedObjects, ...updatedPlayers };
-
-
-    const updatedBullets = UpdateBullets(room, playersVertMap, dTime);
-
-    updatedObjects = { ...updatedObjects, ...updatedBullets };
-
-
-    return updatedObjects;
-}
-
-module.exports = { StartGame, StopGame }
+module.exports = { UpdateGame }
