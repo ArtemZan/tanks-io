@@ -1,5 +1,5 @@
 const { Player, RenderObjects } = require("./Game/Object");
-const { io, GetSocket } = require("./Connection/Connection");
+const { io, GetSocket, GetSockets } = require("./Connection/Connection");
 const rooms = require("./Rooms");
 
 class Room {
@@ -46,10 +46,12 @@ function AddRoom(id) {
 
 function DeleteRoom(id) {
     delete rooms[id];
+
+    GetSockets(id).forEach(socket => void socket.leave(id));
 }
 
 function DoesRoomExist(code) {
-    for (let currentCode of io.sockets.adapter.rooms.keys()) {
+    for (let currentCode in rooms) {
         if (currentCode === code) {
             return true;
         }
@@ -85,8 +87,13 @@ function AddPlayer(room_id, id) {
     })
 }
 
-function RemovePlayer(room, id) {
-    rooms[room].RemovePlayer(id);
+function RemovePlayer(room_id, id) {
+    if(DoesRoomExist(room_id))
+    {
+        rooms[room_id].RemovePlayer(id);
+    }
+
+    GetSocket(id).leave(room_id);
 }
 
 function GetPlayers(room) {
@@ -114,17 +121,14 @@ function GetPlayerById(id) {
     }
 }
 
-async function EmitUpdate(room, updatedObjects) {
+async function EmitUpdate(room_id, updatedObjects) {
     if (Object.keys(updatedObjects).length === 0) {
         return;
     }
 
-    const clients = Array.from(io.sockets.adapter.rooms.get(room));
+    const sockets = GetSockets(room_id)
 
-
-    for (let ind in clients) {
-        const socket = io.sockets.sockets.get(clients[ind]);
-
+    for (let socket of sockets) {
         socket.emit("update", {
             id: socket.id,
             obj: updatedObjects

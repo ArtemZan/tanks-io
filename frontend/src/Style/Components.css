@@ -1,0 +1,41 @@
+.dropdown
+{
+    position: relative;
+}
+
+.dropdown>button
+{
+    background-color: transparent;
+    border: none;
+    outline: none;
+    color: white;
+}
+
+.dropdown button>*
+{
+    display: block;
+}
+
+.dropdown .dropdown-content
+{
+    margin: 0;
+    padding: 10px;
+    right: 0;
+    position: absolute;
+    display: none;
+    text-decoration: none;
+}
+
+.dropdown .dropdown-content li
+{
+    padding: 5px;
+    text-decoration: none;
+    list-style: none;
+}
+
+.dropdown button:focus~.dropdown-content,
+.dropdown:hover .dropdown-content,
+.dropdown .dropdown-content:hover
+{
+    display: block;
+}

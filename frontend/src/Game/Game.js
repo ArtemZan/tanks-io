@@ -1,7 +1,7 @@
 import "./Game.css"
 import "./Windows/Windows.css"
 
-import { Component, createRef } from "react"
+import { Component, createRef, useContext } from "react"
 import {
     Init as InitDrawingLib,
     DrawTriangles,
@@ -14,10 +14,13 @@ import {
 
 
 import { IsKeyDown, IsKeyUp, mousePos } from "./Input";
-import UI, { UIStates } from "./Windows/UI";
+import UI from "./Windows/UI";
 import { AddEventListenner, Connect, Emit } from "./Connection";
+import { gameStateContext } from "./State";
 
 export default class Game extends Component {
+    static contextType = gameStateContext;
+
     constructor(props) {
         super(props);
 
@@ -42,26 +45,26 @@ export default class Game extends Component {
 
     OnConnect()
     {
-        AddEventListenner("join", this.OnGameStarts.bind(this))
+        AddEventListenner("join", this.StartGame.bind(this))
 
         AddEventListenner("update", this.OnUpdate.bind(this))
 
         AddEventListenner("killed", data => {
             if(data.id === data.killed || data.playersRemain === 1)
             {
-                this.OnGameStops();
+                this.StopGame();
             }
         });
     }
 
-    OnGameStarts() {
+    StartGame() {
         console.log("The game begins!");
         this.setState({ hasGameStarted: true });
 
         this.gameLoopId = setInterval(this.OnLocalUpdate.bind(this), 30);
     }
 
-    OnGameStops() {
+    StopGame() {
         this.setState({ hasGameStarted: false });
 
         //console.log("You lose or all players left");
@@ -207,6 +210,14 @@ export default class Game extends Component {
         window.addEventListener("mousemove", this.OnMouseMove.bind(this));
     }
 
+    componentDidUpdate()
+    {
+        if(this.context.state.roomCode === null && this.state.hasGameStarted)
+        {
+            this.StopGame();
+        }
+    }
+
     componentWillUnmount() {
         //window.removeEventListener("resize", this.OnResize.bind(this));
         //window.romoveEventListener("keydown", this.OnKeyDown.bind(this));
@@ -227,6 +238,7 @@ export default class Game extends Component {
         this.camera.view.y.y = 2;
 
         let offset = this.playerDir.scale(0.1).sub(this.currentCameraOffset);
+        offset = new vec2(0, 0);
 
         //console.log(this.playerDir);
 

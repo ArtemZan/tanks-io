@@ -15,7 +15,7 @@ function GetSocket(socket_id)
 
 function GetSockets(room_id)
 {
-    return Array.from(io.sockets.adapter.rooms.get(room_id)).map(id => io.sockets.sockets.get(id));
+    return Array.from(io.sockets.adapter.rooms.get(room_id) || []).map(id => io.sockets.sockets.get(id));
 }
 
 module.exports = {io, GetSocket, GetSockets};

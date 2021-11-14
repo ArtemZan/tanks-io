@@ -24,3 +24,27 @@
 {
     
 }
+
+
+
+
+.game-ui
+{
+
+}
+
+.game-ui .menu
+{
+    cursor: default;
+    position: fixed;
+    right: 10px;
+    top: 10px;
+}
+
+.game-ui .menu .dropdown-content
+{
+    background-color: white;
+    color: black;
+    border-radius: 5px;
+    min-width: 100px;
+}

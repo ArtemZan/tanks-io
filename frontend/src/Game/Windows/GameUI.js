@@ -1,12 +1,21 @@
 import { useContext } from "react"
+import { Button, Dropdown } from "../../Components/Components";
 import { gameStateContext } from "../State"
 
-export default function GameUI() {
-    const {state} = useContext(gameStateContext);
+export default function GameUI({LeaveGame}) {
+    const { state } = useContext(gameStateContext);
 
     return (
         <div className="game-ui">
-            <h2>{state.roomCode}</h2>
+            <Dropdown
+                className="menu"
+                buttonContent={<i className="material-icons hoverable">settings</i>}
+                options={[
+                    <div className = "room-code">Room code: <strong>{state.roomCode}</strong></div>,
+                    <Button onClick = {LeaveGame}>Leave</Button>
+                ]}>
+
+            </Dropdown>
         </div>
     )
 }

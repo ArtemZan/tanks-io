@@ -1,5 +1,5 @@
 
-import "./App.css"
+import "./Style/Style.css"
 
 import Game from "./Game/Game";
 import { GameStateProvider } from "./Game/State";

@@ -12,12 +12,12 @@ const UIStates = {
     waitingForPlayers: 0,
     lost: 1,
     playing: 2,
-    start: 3
+    menu: 3
 }
 
 export default function UI(props) {
     let [uiProps, SetUIProps] = useState({});
-    let [uiState, SetUIState] = useState(UIStates.start);
+    let [uiState, SetUIState] = useState(UIStates.menu);
 
     const { state, SetState, UpdateState } = useContext(gameStateContext);
 
@@ -25,6 +25,7 @@ export default function UI(props) {
         AddEventListenner("wrongCode", WrongCode);
 
         AddEventListenner("join", code => {
+            SetUIProps({ LeaveGame });
             UpdateState({ roomCode: code });
             JoinGame();
         })
@@ -59,8 +60,15 @@ export default function UI(props) {
         SetUIState(UIStates.playing);
     }
 
+    function LeaveGame()
+    {
+        SetUIState(UIStates.menu);
+        Emit("leave");
+        UpdateState({roomCode: null})
+    }
+
     function WrongCode() {
-        console.log("error");
+        console.log("Wrong code");
         SetUIProps({
             ...uiProps,
             error: "There is no room with given code"
@@ -70,31 +78,36 @@ export default function UI(props) {
 
 
     switch (uiState) {
-        case UIStates.start:
+        case UIStates.menu:
             {
-                result = <StartWindow {...uiProps} />;
+                result = StartWindow
                 break;
             }
         case UIStates.waitingForPlayers:
             {
-                result = <Waiting {...uiProps} />
+                result = Waiting 
                 break;
             }
         case UIStates.playing:
             {
-                result = <GameUI {...uiProps} />
+                result = GameUI
                 break;
             }
         case UIStates.lost:
             {
-                result = <LoseWindow {...uiProps} />;
+                result = LoseWindow
                 break;
             }
     }
 
+    function FinalIU()
+    {
+        return result(uiProps)
+    }
+
     return (
         <div className="ui">
-            {result}
+            <FinalIU/>
         </div>);
 }
 
