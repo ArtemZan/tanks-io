@@ -93,7 +93,8 @@ function RemovePlayer(room_id, id) {
         rooms[room_id].RemovePlayer(id);
     }
 
-    GetSocket(id).leave(room_id);
+    const socket = GetSocket(id);
+    socket && leave(room_id);
 }
 
 function GetPlayers(room) {

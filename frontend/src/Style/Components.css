@@ -1,23 +1,19 @@
-.dropdown
-{
+.dropdown {
     position: relative;
 }
 
-.dropdown>button
-{
+.dropdown>button {
     background-color: transparent;
     border: none;
     outline: none;
     color: white;
 }
 
-.dropdown button>*
-{
+.dropdown button>* {
     display: block;
 }
 
-.dropdown .dropdown-content
-{
+.dropdown .dropdown-content {
     margin: 0;
     padding: 10px;
     right: 0;
@@ -26,16 +22,78 @@
     text-decoration: none;
 }
 
-.dropdown .dropdown-content li
-{
+.dropdown .dropdown-content li {
     padding: 5px;
     text-decoration: none;
     list-style: none;
 }
 
-.dropdown button:focus~.dropdown-content,
-.dropdown:hover .dropdown-content,
-.dropdown .dropdown-content:hover
-{
+.dropdown button:focus~.dropdown-content, .dropdown:hover .dropdown-content, .dropdown .dropdown-content:hover {
     display: block;
+}
+
+/* TOOLTIP */
+
+.tooltip-container {
+    position: relative;
+}
+
+.tooltip-container .tooltip
+{
+    position: absolute;
+    border-radius: 5px;
+    background-color: white;
+    color: black;
+    padding: 5px;
+}
+
+.tooltip-container .tooltip.bottom
+{
+    top: calc(100% + 7px);
+}
+
+.tooltip-container .tooltip.top
+{
+    bottom: calc(100% + 7px);
+}
+
+.tooltip-container .tooltip.bottom,
+.tooltip-container .tooltip.top
+{
+    right: 50%;
+    transform: translateX(50%);
+}
+
+.tooltip-container .tooltip.show-on-hover
+{
+    display: none;
+}
+
+.tooltip-container .tooltip,
+.tooltip-container .tooltip.show-on-hover:hover
+{
+    display: inline-block;
+}
+
+.tooltip::after
+{
+    content: "";
+    background-color: white;
+    width: 7px;
+    height: 7px;
+    position: absolute;
+}
+
+.tooltip.top::after
+{
+    top: 100%;
+    right: 50%;
+    transform: translate(50%, -50%) rotateZ(45deg);
+}
+
+.tooltip.bottom::after
+{
+    bottom: 100%;
+    right: 50%;
+    transform: translate(50%, 50%) rotateZ(45deg);
 }

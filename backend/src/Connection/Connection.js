@@ -10,6 +10,7 @@ http.listen(PORT, () => {
 
 function GetSocket(socket_id)
 {
+    console.log(socket_id, Array.from(io.sockets.sockets).map(s => s[0]));
     return io.sockets.sockets.get(socket_id);
 }
 

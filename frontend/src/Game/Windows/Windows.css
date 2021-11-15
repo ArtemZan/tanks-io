@@ -48,3 +48,36 @@
     border-radius: 5px;
     min-width: 100px;
 }
+
+
+.waiting-ui i
+{
+    cursor: pointer;
+}
+
+.waiting-ui .tooltip
+{
+    color: green;
+    animation: none;
+    opacity: 0;
+}
+
+.waiting-ui .tooltip.fading
+{
+    animation: fade 1.5s forwards;
+}
+
+
+@keyframes fade {
+    from{
+        opacity: 1;
+    }
+
+    50%{
+        opacity: 1;
+    }
+
+    to{
+        opacity: 0;
+    }
+}
