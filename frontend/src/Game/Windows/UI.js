@@ -6,20 +6,13 @@ import GameUI from "./GameUI";
 
 import { useContext, useEffect, useState } from "react";
 import Waiting from "./Waiting";
-import { gameStateContext } from "../State";
-
-const UIStates = {
-    waitingForPlayers: 0,
-    lost: 1,
-    playing: 2,
-    menu: 3
-}
+import { gameStateContext, UIStates } from "../State";
 
 export default function UI(props) {
     let [uiProps, SetUIProps] = useState({});
-    let [uiState, SetUIState] = useState(UIStates.menu);
 
     const { state, SetState, UpdateState } = useContext(gameStateContext);
+    const { ui, roomCode} = state;
 
     useEffect(() => {
         AddEventListenner("wrongCode", WrongCode);
@@ -31,8 +24,7 @@ export default function UI(props) {
         })
 
         AddEventListenner("wait", code => {
-            UpdateState({ roomCode: code });
-            SetUIState(UIStates.waitingForPlayers);
+            UpdateState({ roomCode: code, ui: UIStates.waitingForPlayers });
             SetUIProps({ code });
         })
 
@@ -42,12 +34,12 @@ export default function UI(props) {
             if (data.id === data.killed) {
                 console.log("I died :(");
 
-                SetUIState(UIStates.lost);
+                UpdateState({ui: UIStates.lost});
                 SetUIProps(data.info);
             }
             else {
                 if (data.playersRemain === 1) {
-                    SetUIState(UIStates.waitingForPlayers);
+                    UpdateState({ui: UIStates.waitingForPlayers});
                 }
             }
         })
@@ -57,14 +49,15 @@ export default function UI(props) {
     let result = null;
 
     function JoinGame() {
-        SetUIState(UIStates.playing);
+        UpdateState({ui: UIStates.playing})
     }
 
     function LeaveGame()
     {
-        SetUIState(UIStates.menu);
+        UpdateState({roomCode: null, ui: UIStates.menu})
         Emit("leave");
-        UpdateState({roomCode: null})
+
+        window.location.href(window.location.pathname);
     }
 
     function WrongCode() {
@@ -77,7 +70,7 @@ export default function UI(props) {
 
 
 
-    switch (uiState) {
+    switch (ui) {
         case UIStates.menu:
             {
                 result = StartWindow
@@ -98,6 +91,7 @@ export default function UI(props) {
                 result = LoseWindow
                 break;
             }
+        default: result = () => null;
     }
 
     function FinalIU()

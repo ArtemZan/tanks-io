@@ -18,6 +18,16 @@ function Button({ content, onClick, children, className }) {
     )
 }
 
+function Link({ content, url, children, className })
+{
+    return (
+        <a href = {url} className={MergeClassName("link", className)}>
+            {content}
+            {children}
+        </a>
+    )
+}
+
 function Dropdown({ buttonContent, options, className }) {
 
 
@@ -47,5 +57,5 @@ function Tooltip({ className, children, content, position = "top", showOnHover }
 }
 
 export {
-    Dropdown, Button, Tooltip
+    Dropdown, Button, Link, Tooltip
 }

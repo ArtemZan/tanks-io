@@ -1,5 +1,5 @@
 import { useContext } from "react"
-import { Button, Dropdown } from "../../Components/Components";
+import { Button, Dropdown } from "../../Utilities/Components";
 import { gameStateContext } from "../State"
 
 export default function GameUI({LeaveGame}) {

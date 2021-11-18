@@ -7,8 +7,12 @@ const port = 3000;
 
 function Connect()
 {
+    console.trace();
     socket = io(URL + ":" + port, { transports: ['websocket'] });
 }
+
+Connect();
+
 
 function Disconnect()
 {

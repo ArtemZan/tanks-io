@@ -1,4 +1,4 @@
-const io = require("../Connection/Connection");
+const {io, GetSocket, GetSocketsIds} = require("../Connection/Connection");
 const { DetectCollision } = require("../Math/Math");
 const { GetPlayers, rooms } = require("../Room");
 const { RenderObjects } = require("./Object");
@@ -35,9 +35,9 @@ function UpdateGame(room, timer) {
 
 
 //Emits 'killed' event
-async function KillPlayer(room, killed_player_id, killer_id) {
+async function KillPlayer(room_id, killed_player_id, killer_id) {
 
-    const ids = io.sockets.adapter.rooms.get(room);
+    const ids = GetSocketsIds(room_id); //io.sockets.adapter.rooms.get(room);
 
     for (let socketId of ids) {
         let info = {};
@@ -52,11 +52,11 @@ async function KillPlayer(room, killed_player_id, killer_id) {
 
         console.log("Someone died");
 
-        io.sockets.sockets.get(socketId).emit("killed", {
+        GetSocket(socketId).emit("killed", {
             id: socketId,
             killed: killed_player_id,
             killer: killer_id,
-            playersRemain: Object.keys(GetPlayers(room)).length - 1,
+            playersRemain: Object.keys(GetPlayers(room_id)).length - 1,
             ...info,
             ...assists
         }); //No assists for now

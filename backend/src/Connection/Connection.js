@@ -14,9 +14,14 @@ function GetSocket(socket_id)
     return io.sockets.sockets.get(socket_id);
 }
 
-function GetSockets(room_id)
+function GetSocketsIds(room_id)
 {
-    return Array.from(io.sockets.adapter.rooms.get(room_id) || []).map(id => io.sockets.sockets.get(id));
+    return Array.from(io.sockets.adapter.rooms.get(room_id) || [])
 }
 
-module.exports = {io, GetSocket, GetSockets};
+function GetSockets(room_id)
+{
+    return GetSocketsIds(room_id).map(id => io.sockets.sockets.get(id));
+}
+
+module.exports = {io, GetSocket, GetSockets, GetSocketsIds};

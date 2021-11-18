@@ -67,7 +67,7 @@ export default class Game extends Component {
     StopGame() {
         this.setState({ hasGameStarted: false });
 
-        //console.log("You lose or all players left");
+        console.trace("The game ends");
 
         clearInterval(this.gameLoopId);
     }
@@ -198,9 +198,7 @@ export default class Game extends Component {
 
     componentDidMount() {
         InitDrawingLib(this.canvas.current);
-
-        Connect();
-
+        
         this.OnConnect();
         
         window.addEventListener("resize", this.OnResize.bind(this));
@@ -209,6 +207,7 @@ export default class Game extends Component {
         window.addEventListener("mousedown", this.OnMouseDown.bind(this));
         window.addEventListener("mousemove", this.OnMouseMove.bind(this));
     }
+
 
     componentDidUpdate()
     {

@@ -8,6 +8,7 @@
     position: absolute;
     top: 0;
     color: white;
+    width: 100%;
 }
 
 .message
@@ -50,19 +51,60 @@
 }
 
 
+.waiting-ui>h3
+{
+    margin-top: 40px;
+    text-align: center;
+}
+
+.waiting-ui .home
+{
+    background-color: transparent;
+    color: white;
+}
+
+.waiting-ui .code
+{
+    padding-top: 30px;
+    text-align: center;
+    font-size: larger;
+}
+
+.waiting-ui .share
+{
+    margin-top: 30px;
+}
+
 .waiting-ui i
 {
     cursor: pointer;
+    font-size: 40px;
 }
 
-.waiting-ui .tooltip
+.waiting-ui .share
+{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+.waiting-ui .copy
+{
+    background-color: transparent;
+    border: none;
+    color: lightblue;
+}
+
+.waiting-ui .copy .tooltip
 {
     color: green;
     animation: none;
     opacity: 0;
 }
 
-.waiting-ui .tooltip.fading
+.waiting-ui .copy .tooltip.fading
 {
     animation: fade 1.5s forwards;
 }
