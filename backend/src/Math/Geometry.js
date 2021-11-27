@@ -78,18 +78,26 @@ function DoTrianglesIntersect(tr1, tr2)
     return false;
 }
 
+//Returns false or two lines that collided, each represented by array of two indices of points in corresponding given mesh
 function DetectCollision(mesh1, mesh2)
 {
+    if(!Array.isArray(mesh1))
+    {
+        console.error("'mesh1' given to 'DetectCollision' must be an array, but got ", mesh1);
+        return;
+    }
+    
+    if(!Array.isArray(mesh2))
+    {
+        console.error("'mesh2' given to 'DetectCollision' must be an array, but got ", mesh2);
+        return;
+    }
+    
     mesh1 = mesh1.map(vec => new vec2(vec.x, vec.y));
     mesh2 = mesh2.map(vec => new vec2(vec.x, vec.y));
 
     for(let i1 = 0; i1 < mesh1.length - 2; i1 += 3)
     {
-        if(!(mesh1[i1] instanceof vec2))
-        {
-            console.log("Expected vec2, but got", mesh1[i1]);
-        }
-
         for(let i2 = 0; i2 < mesh2.length - 2; i2 += 3)
         {
             let intersection = DoTrianglesIntersect(

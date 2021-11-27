@@ -1,5 +1,5 @@
-const { EmitUpdate } = require("../Room");
-const rooms = require("../Rooms");
+const { EmitUpdate } = require("../Rooms/Room");
+const rooms = require("../Rooms/Rooms");
 const {UpdateGame} = require("./GameLogic");
 
 let intervalId;
@@ -28,9 +28,12 @@ function StopGame() {
 //The game loop
 function UpdateGames(timer) {
     for (let roomId in rooms) {
-        const updatedObjects = UpdateGame(roomId, timer);
-
-        EmitUpdate(roomId, updatedObjects);
+        if(rooms[roomId].hasGameStarted)
+        {
+            const updatedObjects = UpdateGame(roomId, timer);
+            
+            EmitUpdate(roomId, updatedObjects);
+        }
     }
 
     timer.setTime((new Date).getTime());

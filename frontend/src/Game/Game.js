@@ -55,6 +55,12 @@ export default class Game extends Component {
                 this.StopGame();
             }
         });
+
+        AddEventListenner("wait", () => {
+            console.log("Wait");
+            this.objects = {};
+            this.StopGame();
+        })
     }
 
     StartGame() {

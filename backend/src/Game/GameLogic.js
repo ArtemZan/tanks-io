@@ -1,7 +1,8 @@
-const {io, GetSocket, GetSocketsIds} = require("../Connection/Connection");
+const { io, GetSocket, GetSocketsIds } = require("../Connection/Connection");
 const { DetectCollision } = require("../Math/Math");
-const { GetPlayers, rooms } = require("../Room");
-const { RenderObjects } = require("./Object");
+const { GetPlayers } = require("../Rooms/Players");
+const { rooms, Room } = require("../Rooms/Room");
+const { Bullet, Player } = require("./Object");
 
 function UpdateGame(room, timer) {
     //Get change of time since last update
@@ -12,23 +13,17 @@ function UpdateGame(room, timer) {
     let updatedObjects = {};
 
 
-    const players = rooms[room].scene.players;
 
-    const playersVert = RenderObjects(Object.values(players));
-    const playersVertMap = Object.keys(players).reduce((res, id, index) => {
-        res[id] = playersVert[index]; 
-        return res
-    }, {});
-
-    const updatedPlayers = UpdatePlayers(playersVertMap, players, dTime);
-
-    updatedObjects = { ...updatedObjects, ...updatedPlayers };
+    const scene = rooms[room].scene;
 
 
-    const updatedBullets = UpdateBullets(room, playersVertMap, dTime);
+    updatedObjects = { ...updatedObjects, ...UpdatePlayers(room, dTime) };
 
-    updatedObjects = { ...updatedObjects, ...updatedBullets };
+    updatedObjects = { ...updatedObjects, ...UpdateBullets(room, dTime) };
 
+    //console.log("Updated object: ", updatedObjects);
+
+    updatedObjects = { ...updatedObjects, ...UpdateCollisions(room, dTime, updatedObjects) };
 
     return updatedObjects;
 }
@@ -36,6 +31,7 @@ function UpdateGame(room, timer) {
 
 //Emits 'killed' event
 async function KillPlayer(room_id, killed_player_id, killer_id) {
+    console.log("Someone died");
 
     const ids = GetSocketsIds(room_id); //io.sockets.adapter.rooms.get(room);
 
@@ -50,7 +46,6 @@ async function KillPlayer(room_id, killed_player_id, killer_id) {
             assists.assists = [];
         }
 
-        console.log("Someone died");
 
         GetSocket(socketId).emit("killed", {
             id: socketId,
@@ -80,7 +75,10 @@ function CalculateDamage(player, bullet, is_hit_direct) {
     return damage;
 }
 
+
 function Explosion(room_id, bullet, hit_player_id) {
+    console.log("Explosion: ", bullet.playerId, hit_player_id);
+
     const players = GetPlayers(room_id);
 
     let killed = [];
@@ -100,107 +98,135 @@ function Explosion(room_id, bullet, hit_player_id) {
     return killed;
 }
 
-//Returns whether the player was updated
-function UpdatePlayer(player, d_time) {
-    if (Math.abs(player.speed) >= 1e-6 || Math.abs(player.rotationSpeed) >= 1e-6 || player.aim.sub(player.turretDir).magnitude() > 1e-2) {
-        player.pos = player.pos.add(player.dir.scale(player.speed * d_time));
-        player.dir = player.dir.rotate(player.rotationSpeed * d_time);
+function HandleCollision(room_id, obj1, obj2, collision) {
+    let update = {};
 
-        const turretRotSpeed = player.CalculateTurretRotationSpeed();
+    const scene = rooms[room_id].scene;
 
-        player.turretDir = player.turretDir.rotate((turretRotSpeed + player.rotationSpeed) * d_time);
+    let killedPlayers = [];
 
+    let bullet = null;
+    let player = null;
 
-        return true;
+    if (obj1 instanceof Bullet) {
+        bullet = obj1;
+    }
+    else if (obj2 instanceof Bullet) {
+        bullet = obj2;
     }
 
-    return false;
+    if (obj1 instanceof Player) {
+        player = obj1;
+    }
+    else {
+        player = obj2;
+    }
+
+    if (bullet && player && player.id !== bullet.playerId) {
+        killedPlayers = Explosion(room_id, bullet, player.id);
+
+        update[bullet.id] = {v: []};
+        scene.bullets = scene.bullets.filter(b => b.id !== bullet.id);
+    }
+
+    for (let killed_player_id of killedPlayers) {
+
+        update[killed_player_id] = { v: [] };
+    }
+
+    //console.log("Collision handled: ", update);
+
+    return update;
 }
 
-function UpdatePlayers(players_vertices, players, d_time) {
+function UpdateCollisions(room_id, d_time, updated) {
+    let update = {};
+
+    const room = rooms[room_id];
+
+    if (!(room instanceof Room)) {
+        console.error("Invalid 'room_id' given to 'UpdateCollisions'");
+        return;
+    }
+
+    const scene = room.scene;
+    const objects = scene.ToMap();
+
+    for (let object1_id in updated) {
+        const obj1 = objects[object1_id];
+
+        if (!(obj1 instanceof Object)) {
+            continue;
+            console.log("'obj1' is not of type 'Object': ", object1_id, objects);
+        }
+
+        //console.log(obj1);
+
+        for (let object2_id in objects) {
+            if (object1_id === object2_id) {
+                continue;
+            }
+
+            const obj2 = objects[object2_id];
+
+            if (!(obj2 instanceof Object)) {
+                continue;
+                console.log("'obj2' is not of type 'Object': ", object2_id, objects);
+            }
+
+            let collision = DetectCollision(obj1.GetVertices(), obj2.GetVertices());
+
+            if (collision) {
+                update = { ...update, ...HandleCollision(room_id, obj1, obj2, collision) };
+            }
+        }
+    }
+
+    //console.log("Collisions update: ", update);
+
+    return update;
+}
+
+function UpdatePlayers(room_id, d_time) {
     let updatedObjects = {};
 
-    for (let player_id in players) {
-        const player = players[player_id]
+    const players = rooms[room_id].scene.players;
 
-        const shouldUpdate = UpdatePlayer(player, d_time);
-        if (shouldUpdate) {
-            updatedObjects[player.id] = { v: players_vertices[player.id], pos: player.pos, dir: player.dir, hp: player.hp }
+    for (let player_id in players) {
+        const player = players[player_id];
+
+        const updated = player.Update(d_time);
+
+        if (updated) {
+            updatedObjects[player.id] = {
+                v: player.vertices,
+                pos: player.pos,
+                dir: player.dir,
+                hp: player.hp
+            }
         }
     }
 
     return updatedObjects;
 }
 
-//Possible returned values: null, {vertices: Vector2[]} or {killedPlayers: Number[]}
-function UpdateBullet(room, players_vertices, bullet, d_time) {
-    if (bullet.pos.magnitude() > 10) {
-        return null;
-    }
-
-    bullet.pos = bullet.pos.add(bullet.dir.scale(bullet.speed * d_time));
-    const vertices = bullet.Render();
-
-    let killedPlayers = [];
-
-    let exploded = false;
-
-    const players = rooms[room].scene.players;
-
-    for (let player_id in players) {
-        if (player_id !== bullet.playerId) {
-            let collision = DetectCollision(players_vertices[player_id], vertices);
-
-            if (collision) {
-                exploded = true;
-
-                console.log("Hit");
-
-                const killed = Explosion(room, bullet, player_id);
-
-                killedPlayers.push(killed);
-            }
-        }
-    }
-
-
-    if (exploded) {
-        return { killedPlayers: [...new Set(killedPlayers)] };
-    }
-
-    return { vertices };
-}
-
-function UpdateBullets(room, players_vertices, d_time) {
+function UpdateBullets(room, d_time) {
     let updatedObjects = {};
 
     const bullets = rooms[room].scene.bullets;
 
-    let bulletInd = 0;//players_vertices.length;
-
     for (let bullet_i in bullets) {
         let bullet = bullets[bullet_i];
 
-        const update = UpdateBullet(room, players_vertices, bullet, d_time);
+        const updated = bullet.Update(d_time);
 
-        if (!update || update.killedPlayers) {
-            updatedObjects[bulletInd] = { v: [] };
+        if (updated) {
+            updatedObjects[bullet.id] = { v: bullet.GetVertices() };
+        }
+        else {
+            updatedObjects[bullet.id] = { v: [] };
             delete bullets[bullet_i];
-
-            if (update && update.killedPlayers) {
-                let players = rooms[room].scene.players;
-
-                for (let killed of update.killedPlayers) {
-                    updatedObjects[killed] = { v: [] };
-                    delete players[killed];
-                }
-            }
         }
-        else if (update.vertices) {
-            updatedObjects[bulletInd] = { v: update.vertices };
-        }
-
-        bulletInd++;
     }
 
     rooms[room].scene.bullets = bullets.filter(el => el);

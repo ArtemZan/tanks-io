@@ -57,7 +57,7 @@ export default function UI(props) {
         UpdateState({roomCode: null, ui: UIStates.menu})
         Emit("leave");
 
-        window.location.href(window.location.pathname);
+        window.location.href = window.location.pathname;
     }
 
     function WrongCode() {

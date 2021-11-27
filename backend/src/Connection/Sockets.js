@@ -1,9 +1,11 @@
 //This file handles connections, adding sockets and players to rooms and client events
 
 const { Socket } = require("socket.io");
-const { DoesRoomExist, GenRoomCode, AddPlayer, RemovePlayer, GetPlayerById, AddRoom } = require("../Room")
-const rooms = require("../Rooms");
-const {io} = require("./Connection")
+const { DoesRoomExist, GenRoomCode, AddRoom } = require("../Rooms/Room");
+const { AddPlayer, RemovePlayer, GetPlayerById } = require("../Rooms/Players");
+const rooms = require("../Rooms/Rooms");
+const { io, GetSockets } = require("./Connection");
+const { Player } = require("../Game/Object");
 
 io.on("connection", socket => {
     console.log("New connection");
@@ -48,15 +50,9 @@ io.on("connection", socket => {
 })
 
 function Disconnect(socket) {
-    let player = GetPlayerById(socket.id);
-
-    if (player) {
-        RemovePlayer(player.room, socket.id);
-    }
-
     console.log("A player disconnected");
 
-    socket.leave(socket.rooms);
+    Leave(socket);
 }
 
 function Join(socket, code) {
@@ -66,10 +62,11 @@ function Join(socket, code) {
         socket.join(code);
         AddPlayer(code, socket.id);
 
-        switch (io.sockets.adapter.rooms.get(code).size) {
-            case 1: break;
-            case 2: io.to(code).emit("join", code); break;
-            default: socket.emit("join", code);
+        if (io.sockets.adapter.rooms.get(code).size === 2) {
+            io.to(code).emit("join", code);
+        }
+        else {
+            socket.emit("join", code);
         }
     }
     else {
@@ -77,11 +74,30 @@ function Join(socket, code) {
     }
 }
 
-function Leave(socket)
-{
-    for(let room of socket.rooms)
-    {
-        RemovePlayer(room, socket.id);
+function Leave(socket) {
+    
+    const player = GetPlayerById(socket.id);
+
+    if(player instanceof Player)
+    {   
+        const room_id = player.room;
+
+        RemovePlayer(room_id, socket.id);
+        
+        let sockets = GetSockets(room_id);
+        console.log(sockets, sockets.length);
+        
+        if (sockets.length === 1) {
+            const scene = rooms[room_id].scene;
+            const obj = scene.ToMap();
+            for(let o in obj)
+            {
+                obj[o] = {v: []};
+            }
+
+
+            io.to(room_id).emit("wait", room_id);
+        }
     }
 }
 

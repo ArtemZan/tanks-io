@@ -5,9 +5,12 @@ class matrix2x2 {
             this.x = new vec2(x, 0);
             this.y = new vec2(0, x);
         }
-        else {
+        else if (x instanceof vec2 && y instanceof vec2) {
             this.x = x;
             this.y = y;
+        }
+        else {
+            console.error("Ivalid parameters given to matrix2x2 constructor");
         }
     }
 }
@@ -69,8 +72,7 @@ class vec2 {
         return new vec2(this.x * k, this.y * k);
     }
 
-    cross(vec)
-    {
+    cross(vec) {
         return new vec3(this.x, this.y, 0).cross(new vec3(vec.x, vec.y, 0));
     }
 
@@ -128,18 +130,15 @@ class vec3 {
         return new vec3(this.x * k, this.y * k, this.z * k);
     }
 
-    dot(vec)
-    {
+    dot(vec) {
         return this.x * vec.x + this.y * vec.y + this.z * vec.z;
     }
 
-    cos(vec)
-    {
+    cos(vec) {
         return this.normalize.dot(vec.normalize());
     }
 
-    cross(vec)
-    {
+    cross(vec) {
         return new vec3(
             this.y * vec.z - this.z * vec.y,
             this.z * vec.x - this.x * vec.z,
