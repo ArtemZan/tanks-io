@@ -84,6 +84,7 @@ class GameObject {
         this.rotation = 0;
         this.speed = 0;
         this.rotationSpeed = 0;
+        this.mass = 1;
 
         this.vertices = [];
 
@@ -163,6 +164,7 @@ class Player extends GameObject {
         this.aim = new vec2(0, 1);
         this.turretRotation = 0;
         this.turretRotationSpeed = 0;
+        this.mass = 10000;
 
         this.room = room;
         this.id = id;
@@ -303,6 +305,8 @@ class Bullet extends GameObject {
         super(id);
 
         this.playerId = player_id;
+
+        this.mass = 20;
     }
 
     Update(d_time) {

@@ -134,6 +134,10 @@ function HandleCollision(room_id, obj1, obj2, collision) {
         update[killed_player_id] = { v: [] };
     }
 
+
+    
+
+
     //console.log("Collision handled: ", update);
 
     return update;

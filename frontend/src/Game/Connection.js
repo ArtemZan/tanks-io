@@ -3,7 +3,7 @@ import io from "socket.io-client"
 var socket = null;
 
 const URL = "http://localhost";
-const port = 3000;
+const port = 1234;
 
 function Connect()
 {
