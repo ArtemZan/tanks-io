@@ -3,12 +3,11 @@ import io from "socket.io-client"
 var socket = null;
 
 const URL = "http://localhost";
-const port = 1234;
+const port = 5000;
 
 function Connect()
 {
-    console.trace();
-    socket = io(URL + ":" + port, { transports: ['websocket'] });
+    socket = io(URL + ":" + port + "/API", { transports: ['websocket'] });
 }
 
 Connect();
@@ -50,7 +49,7 @@ function AddEventListenner(eventName, callback)
         eventListenners[eventName].push(callback);
     }
 
-    socket.on(eventName, OnEvent.bind(null, eventName))
+    //socket.on(eventName, OnEvent.bind(null, eventName))
 }
 
 function OnEvent(eventName, data)
