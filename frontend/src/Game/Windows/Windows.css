@@ -100,26 +100,6 @@
 .waiting-ui .copy .tooltip
 {
     color: green;
-    animation: none;
+    /* animation: none; */
     opacity: 0;
-}
-
-.waiting-ui .copy .tooltip.fading
-{
-    animation: fade 1.5s forwards;
-}
-
-
-@keyframes fade {
-    from{
-        opacity: 1;
-    }
-
-    50%{
-        opacity: 1;
-    }
-
-    to{
-        opacity: 0;
-    }
 }

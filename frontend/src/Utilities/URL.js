@@ -5,7 +5,6 @@ function SetParam(url, key, value) {
     const current = url.match(RegExp(`(\\?|&)${key}=[^&\\s]+`));
 
     if (current !== null) {
-        const separator = current[0][0]; // expected '?' or '&'
         const res = current[0].replace('=' + current[0].substring(key.length + 1), '=' + value);
         return res;
     }

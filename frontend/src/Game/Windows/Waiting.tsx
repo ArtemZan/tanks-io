@@ -1,10 +1,11 @@
 import { useContext, useEffect, useState } from "react";
-import { EmailShareButton, FacebookShareButton, FacebookMessengerShareButton, FacebookMessengerIcon, TelegramShareButton, TelegramIcon, ViberShareButton, ViberIcon, TwitterShareButton, TwitterIcon } from "react-share"
-import { gameStateContext } from "../State"
-import { Tooltip, Button, Link } from "../../Utilities/Components"
+import { FacebookShareButton, FacebookMessengerIcon, TelegramShareButton, TelegramIcon, ViberShareButton, ViberIcon, TwitterShareButton, TwitterIcon } from "react-share"
+import { Tooltip, Link } from "../../Utilities/Components"
 import { SetParam } from "../../Utilities/URL";
+import { useSelector } from "react-redux";
+import { RootState } from "../Store";
 
-function CopyButton({ roomCode }) {
+function CopyButton({ roomCode }: { roomCode: string }) {
     const [animation, SetAnimation] = useState("");
     const [shouldAnimate, ShouldAnimate] = useState(false);
 
@@ -25,15 +26,15 @@ function CopyButton({ roomCode }) {
     return <button onClick={Copy} className="copy tooltip-container">
         <i className="material-icons hoverable">content_copy</i>
 
-        <Tooltip className={animation} style={{ animation }} position="bottom">Copied</Tooltip>
+        <Tooltip className={animation} position="top">Copied</Tooltip>
     </button>
 }
 
-function ShareCode({code}) {
+function ShareCode({ code }: { code: string }) {
     const url = SetParam(window.location.toString(), "room_code", code);
     const title = "Tanks.io";
 
-    const buttonProps = {title, url}
+    const buttonProps = { title, url }
     const iconsProps = { size: 50, round: true };
 
 
@@ -59,19 +60,20 @@ function ShareCode({code}) {
 }
 
 export default function Waiting() {
-    const { state } = useContext(gameStateContext);
-    const code = state.roomCode;
+    const roomCode = useSelector<RootState>(state => state.room.id) as string
+
+    console.log(roomCode)
 
     return (
         <div className="waiting-ui">
-            <Link className = "home" url = "/">
-                <i className = "fas fa-home"></i>
+            <Link className="home" url="/">
+                <i className="fas fa-home"></i>
             </Link>
 
             <div className="code">
-                Room code: <strong>{code}</strong>
+                Room code: <strong>{roomCode}</strong>
 
-                <ShareCode code = {code}/>
+                <ShareCode code={roomCode} />
             </div>
 
             <h3>

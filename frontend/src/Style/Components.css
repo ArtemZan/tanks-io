@@ -78,7 +78,7 @@
 }
 
 .tooltip-container .tooltip,
-.tooltip-container .tooltip.show-on-hover:hover
+.tooltip-container:hover .tooltip.show-on-hover
 {
     display: inline-block;
 }
@@ -104,4 +104,24 @@
     bottom: 100%;
     right: 50%;
     transform: translate(50%, 50%) rotateZ(45deg);
+}
+
+.tooltip-container .tooltip.fading
+{
+    animation: fade 1.5s forwards;
+}
+
+
+@keyframes fade {
+    from{
+        opacity: 1;
+    }
+
+    50%{
+        opacity: 1;
+    }
+
+    to{
+        opacity: 0;
+    }
 }
