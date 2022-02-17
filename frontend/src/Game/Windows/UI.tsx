@@ -7,7 +7,7 @@ import GameUI from "./GameUI";
 import { useEffect, useState } from "react";
 import Waiting from "./Waiting";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState, setGameUI, setLostUI, setMenuUI, setPlayerId, setRoomCode, setWaitingUI } from "../Store";
+import { endGame, RootState, setGameUI, setLostUI, setMenuUI, setPlayerId, setRoomCode, setWaitingUI, startGame } from "../Store";
 import { UIStateType } from "../Store";
 import { LostUIProps, StartWindowProps } from "../Store/UI";
 
@@ -43,6 +43,7 @@ export default function UI() {
 
     useEffect(() => {
         AddConnectionListenner(() => {
+
             AddEventListenner("wrongCode", WrongCode);
     
             AddEventListenner("Join", data => {
@@ -51,17 +52,21 @@ export default function UI() {
                 code && dispatch(setRoomCode(code))
                 dispatch(setPlayerId(id))
                 dispatch(setWaitingUI())
-
+                dispatch(endGame())
             })
 
             AddEventListenner("GameStarted", () => {
                 console.log("The game begins")
 
                 dispatch(setGameUI())
+                dispatch(startGame())
             })
 
             AddEventListenner("GameEnded", () => {
                 console.log("The game ends")
+
+                dispatch(setWaitingUI())
+                dispatch(endGame())
             })
     
             AddEventListenner("killed", data => {

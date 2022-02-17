@@ -41,7 +41,7 @@ function Emit(eventName: string, ...data: any[]) {
         return;
     }
 
-    console.log(`Emiting '${eventName}' with arguments: `, data)
+    //console.log(`Emiting '${eventName}' with arguments: `, data)
 
     socket?.invoke(eventName, ...data);
 }
@@ -70,6 +70,8 @@ function AddEventListenner(eventName: string, callback: EventCallback) {
 function OnEvent(eventName: string, ...data: any) {
 
     let listenners = eventListenners[eventName];
+
+    //console.log(eventName, listenners)
 
     
     if (listenners) {

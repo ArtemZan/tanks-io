@@ -43,6 +43,11 @@ class Matrix2x3 {
         this.j = j
         this.k = k
     }
+
+    static clone(src: Matrix2x3): Matrix2x3
+    {
+        return new Matrix2x3(Vec2.clone(src.i), Vec2.clone(src.j), Vec2.clone(src.k));
+    }
 }
 
 class Vec2 {
@@ -54,9 +59,9 @@ class Vec2 {
         this.y = y;
     }
 
-    clone(): Vec2
+    static clone(src: Vec2): Vec2
     {
-        return new Vec2(this.x, this.y)
+        return new Vec2(src.x, src.y)
     }
 
     multiply(matrix: Matrix2): Vec2 {
@@ -100,10 +105,20 @@ class Vec3 {
         this.z = z
     }
 
+    multiply(matrix: Matrix2x3): Vec2;
+    multiply(matrix: Matrix3): Vec3;
     multiply(matrix: Matrix3 | Matrix2x3): Vec2 | Vec3 {
-        const mat = matrix as any
+        //const mat = matrix as any
+
+        if("z" in matrix.i)
+        {
+            matrix = matrix as Matrix3
+            return matrix.i.scale(this.x).add(matrix.j.scale(this.y)).add(matrix.k.scale(this.z));
+        }
+
+        matrix = matrix as Matrix2x3
+        return matrix.i.scale(this.x).add(matrix.j.scale(this.y)).add(matrix.k.scale(this.z));
         
-        return matrix.i.scale(this.x).add(mat.j.scale(this.y)).add(mat.k.scale(this.z));
     }
 
     // rotate(rad: number): Vec3 {

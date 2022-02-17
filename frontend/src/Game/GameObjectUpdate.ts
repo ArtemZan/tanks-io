@@ -1,4 +1,4 @@
-import { Matrix2x3, Vec2 } from "./CanvasRendering"
+import { Matrix2x3, Vec2, Vec3 } from "./CanvasRendering"
 
 export class GameObject {
     id: string
@@ -8,12 +8,12 @@ export class GameObject {
         this.id = id
     }
 
-    update(update: ObjectUpdate): void;
-
     update(update: ObjectUpdate) {
         if ("trfm" in update) {
+            const origin = Vec2.clone(update.or)
             for (let vi in this.vertices) {
-                this.vertices[vi] = this.vertices[vi].multiply(update.trfm)
+                let vert = Vec2.clone(this.vertices[vi]).sub(origin)
+                this.vertices[vi] = (new Vec3(vert.x, vert.y, 1).multiply(Matrix2x3.clone(update.trfm)) as Vec2).add(origin);
             }
         }
         else if ("vert" in update) {
@@ -25,7 +25,8 @@ export class GameObject {
 
 export type ObjectTranformUpdate = {
     id: string,
-    trfm: Matrix2x3
+    trfm: Matrix2x3,
+    or: Vec2
 }
 
 export type ObjectVerticesUpdate = {
