@@ -1,6 +1,9 @@
 import { useEffect } from "react";
-import { ToWorldSpace, Vec2 } from "./CanvasRendering";
-import { AddConnectionListenner, Emit } from "./Connection";
+import { useDispatch, useSelector } from "react-redux";
+import { ToWorldSpace, Vec2 } from "../CanvasRendering";
+import { AddConnectionListenner, Emit } from "../Connection";
+import { actions, RootState } from "../Store";
+import { PlayerState } from "../Store/Game/Player";
 import Game from "./Game";
 
 document.addEventListener("mousemove", e => {
@@ -30,6 +33,9 @@ type InputComponentProps = {
 }
 
 function InputComponent(props: InputComponentProps) {
+    const dispatch = useDispatch()
+    const player = useSelector<RootState>(state => state.game.player) as PlayerState
+
     useEffect(() => {
         window.addEventListener("keydown", OnKeyDown)
         window.addEventListener("keyup", OnKeyUp)
@@ -58,19 +64,19 @@ function InputComponent(props: InputComponentProps) {
         //console.log(e.code)
 
         if (e.code === "KeyW") {
-            Emit("StartMoving", true)
+            dispatch(actions.game.player.setSpeed(player.maxSpeed))
         }
-
+        
         if (e.code === "KeyS") {
-            Emit("StartMoving", false);
+            dispatch(actions.game.player.setSpeed(-player.maxSpeed))
         }
-
+        
         if (e.code === "KeyA") {
-            Emit("StartRotating", false);
+            dispatch(actions.game.player.setRotationSpeed(player.maxRotationSpeed))
         }
 
         if (e.code === "KeyD") {
-            Emit("StartRotating", true);
+            dispatch(actions.game.player.setRotationSpeed(-player.maxRotationSpeed))
         }
     }
 

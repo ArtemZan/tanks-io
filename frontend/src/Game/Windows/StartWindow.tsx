@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useDispatch } from "react-redux";
 import { AddEventListenner, Emit } from "../Connection";
-import { setPlayerId, setRoomCode } from "../Store";
+import { actions } from "../Store";
 import { StartWindowProps } from "../Store/UI";
 
 export default function StartWindow(props: StartWindowProps) {
@@ -13,8 +13,8 @@ export default function StartWindow(props: StartWindowProps) {
 
         AddEventListenner("Join", (id) => {
             console.log("Joined: " + id)
-            dispatch(setPlayerId(id))
-            dispatch(setRoomCode(code))
+            dispatch(actions.connection.setId(id))
+            dispatch(actions.room.setId(code))
 
             return 0
         })

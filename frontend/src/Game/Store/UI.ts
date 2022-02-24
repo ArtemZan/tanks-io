@@ -34,7 +34,7 @@ const UIStateSlice = createSlice({
         playing: state => { 
             state.type = UIStateType.PLAYING
         },
-        menu: (state, action: PayloadAction<StartWindowProps>) => { 
+        menu: (state, action: PayloadAction<StartWindowProps>) => {
             state.type = UIStateType.MENU
             state.props = action.payload
         }

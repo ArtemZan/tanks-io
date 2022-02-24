@@ -7,7 +7,7 @@ import GameUI from "./GameUI";
 import { useEffect, useState } from "react";
 import Waiting from "./Waiting";
 import { useDispatch, useSelector } from "react-redux";
-import { endGame, RootState, setGameUI, setLostUI, setMenuUI, setPlayerId, setRoomCode, setWaitingUI, startGame } from "../Store";
+import { RootState, actions } from "../Store";
 import { UIStateType } from "../Store";
 import { LostUIProps, StartWindowProps } from "../Store/UI";
 
@@ -39,7 +39,7 @@ function RenderUI() {
 export default function UI() {
     const dispatch = useDispatch();
 
-    const playerId = useSelector<RootState>(state => state.player.id)
+    const playerId = useSelector<RootState>(state => state.connection.id)
 
     useEffect(() => {
         AddConnectionListenner(() => {
@@ -49,24 +49,24 @@ export default function UI() {
             AddEventListenner("Join", data => {
                 const [id, code] = data
 
-                code && dispatch(setRoomCode(code))
-                dispatch(setPlayerId(id))
-                dispatch(setWaitingUI())
-                dispatch(endGame())
+                code && dispatch(actions.room.setId(code))
+                dispatch(actions.connection.setId(id))
+                dispatch(actions.UIState.waiting())
+                dispatch(actions.game.end())
             })
 
             AddEventListenner("GameStarted", () => {
                 console.log("The game begins")
 
-                dispatch(setGameUI())
-                dispatch(startGame())
+                dispatch(actions.UIState.playing())
+                dispatch(actions.game.start())
             })
 
             AddEventListenner("GameEnded", () => {
                 console.log("The game ends")
 
-                dispatch(setWaitingUI())
-                dispatch(endGame())
+                dispatch(actions.UIState.waiting())
+                dispatch(actions.game.end())
             })
     
             AddEventListenner("killed", data => {
@@ -75,11 +75,11 @@ export default function UI() {
                 if (data.id === data.killed) {
                     console.log("I died :(");
     
-                    dispatch(setLostUI({score: data.score}))
+                    dispatch(actions.UIState.lost({score: data.score}))
                 }
                 else {
                     if (data.playersRemain === 1) {
-                        dispatch(setWaitingUI())
+                        dispatch(actions.UIState.waiting())
                     }
                 }
             })
@@ -90,7 +90,7 @@ export default function UI() {
     function WrongCode() {
         console.log("Wrong code");
 
-        dispatch(setMenuUI({error: "There is no room with given code"}))
+        dispatch(actions.UIState.menu({error: "There is no room with given code"}))
     }
 
     return (

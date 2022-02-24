@@ -1,12 +1,12 @@
 import { memo, MutableRefObject, useEffect, useRef } from "react"
 import { useSelector } from "react-redux"
-import { Clear, DrawTriangles, setCanvasDimensions, SetColor, Vec2, Vec3 } from "./CanvasRendering"
-import { Camera } from "./Camera"
-import { RootState } from "./Store"
-import { GameState } from "./Store/Game"
+import { Clear, DrawTriangles, setCanvasDimensions, SetColor, Vec2, Vec3 } from "../CanvasRendering"
+import { Camera } from "../Camera"
+import { RootState } from "../Store"
+import { GameState } from "../Store/Game"
 
 export type Actions = {
-    updateVertices?: (verticesGenerator: () => Vec2[]) => void
+    updateVertices?: (vertices: Vec2[] | Vec2[][]) => void
     forceRender?: () => void
 }
 
@@ -19,14 +19,13 @@ type CanvasProps = {
 export default memo((props: CanvasProps) => {
     const canvas = useRef<HTMLCanvasElement>(null)
     const context = useRef<CanvasRenderingContext2D>();
-    const vertices = useRef<Vec2[]>([])
+    const vertices = useRef<Vec2[] | Vec2[][]>([])
     const gameState = useSelector<RootState>(state => state.game) as GameState
 
     //console.log("Canvas update: ", props)
-    
-    props.actions.updateVertices = (verticesGenerator) => {
-        vertices.current = verticesGenerator()
-        //console.log("Updated vertices")
+
+    props.actions.updateVertices = (vert: Vec2[] | Vec2[][]) => {
+        vertices.current = vert
         Draw();
     }
 
@@ -72,22 +71,37 @@ export default memo((props: CanvasProps) => {
     }
 
     function Draw() {
-        if (!context.current || !canvas.current) {
+        if (!context.current || !canvas.current || vertices.current.length === 0) {
             return
         }
 
-        let transformed = []
-
-        for (let v of vertices.current) {
-            const vertex = new Vec3(v.x, v.y, 1.0).multiply(props.camera.view);
-            transformed.push(vertex as Vec2);
-        }
-
-        //console.log(transformed)
-
         SetColor(context.current, "#000000");
         Clear(context.current);
-        DrawTriangles(context.current, transformed, "#ffff00");
+
+        function _DrawItem(item: Vec2[]) {
+            if (!context.current) {
+                return
+            }
+
+            let transformed = []
+
+            for (let v of item) {
+                const vertex = new Vec3(v.x, v.y, 1.0).multiply(props.camera.view);
+                transformed.push(vertex);
+            }
+
+            DrawTriangles(context.current, transformed, "#ffff00");
+        }
+
+
+        if (vertices.current[0] instanceof Array) {
+            for (let item of vertices.current) {
+                _DrawItem(item as Vec2[])
+            }
+        }
+        else {
+            _DrawItem(vertices.current as Vec2[])
+        }
     }
 
     return (

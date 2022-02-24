@@ -1,18 +1,18 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Button, Dropdown } from "../../Utilities/Components";
 import { Emit } from "../Connection";
-import { endGame, RootState, setMenuUI, setRoomCode } from "../Store";
+import { RootState, actions } from "../Store";
 
 export default function GameUI() {
     const roomCode = useSelector<RootState>(state => state.room.id)
-    const playerId = useSelector<RootState>(state => state.player.id) as string
+    const playerId = useSelector<RootState>(state => state.connection.id) as string
     
     const dispatch = useDispatch()
 
     const leaveGame = () => {
-        dispatch(setRoomCode(null))
-        dispatch(setMenuUI({}))
-        dispatch(endGame())
+        dispatch(actions.room.setId(null))
+        dispatch(actions.UIState.menu({}))
+        dispatch(actions.game.end())
         Emit("Leave", playerId, roomCode);
 
         //window.location.href = window.location.pathname;
